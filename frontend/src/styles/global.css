@@ -1,0 +1,199 @@
+/* ===================================================================
+   CUSTOM VARIANTS
+   =================================================================== */
+
+/* ===================================================================
+   ROOT VARIABLES - LIGHT MODE
+   Default color palette and design tokens for light mode
+   =================================================================== */
+:root {
+  /* Typography */
+  --font-size: 16px;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+
+  /* Core Colors */
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  
+  /* Component Colors */
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  
+  /* Theme Colors */
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  
+  /* Form Elements */
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --ring: oklch(0.708 0 0);
+  
+  /* Border Radius */
+  --radius: 0.625rem;
+  
+  /* Chart Colors */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  
+  /* Sidebar Colors */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #030213;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+
+/* ===================================================================
+   DARK MODE VARIABLES
+   Custom dark theme with orange/amber accent colors
+   =================================================================== */
+.dark {
+  /* Core Colors */
+  --background: #1a1a1a;
+  --foreground: #f0f0f0;
+  
+  /* Component Colors */
+  --card: #2a2a2a;
+  --card-foreground: #f0f0f0;
+  --popover: #2a2a2a;
+  --popover-foreground: #f0f0f0;
+  
+  /* Theme Colors - Orange/Amber Branding */
+  --primary: #ff6f00;
+  --primary-foreground: #ffffff;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #f0f0f0;
+  --muted: #404040;
+  --muted-foreground: #a0a0a0;
+  --accent: #ffb84d;
+  --accent-foreground: #1a1a1a;
+  --destructive: #ff4444;
+  --destructive-foreground: #f0f0f0;
+  
+  /* Form Elements */
+  --border: #404040;
+  --input: #2a2a2a;
+  --ring: #ff6f00;
+  
+  /* Typography */
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  
+  /* Chart Colors - Orange/Amber Palette */
+  --chart-1: #ff6f00;
+  --chart-2: #ffb84d;
+  --chart-3: #ff8c42;
+  --chart-4: #ff5722;
+  --chart-5: #ffc93c;
+  
+  /* Sidebar Colors */
+  --sidebar: #1a1a1a;
+  --sidebar-foreground: #f0f0f0;
+  --sidebar-primary: #ff6f00;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2a2a2a;
+  --sidebar-accent-foreground: #f0f0f0;
+  --sidebar-border: #404040;
+  --sidebar-ring: #ff6f00;
+}
+
+
+/* ===================================================================
+   TAILWIND THEME CONFIGURATION
+   Maps CSS variables to Tailwind utility classes
+   =================================================================== */
+
+/* ===================================================================
+   BASE STYLES
+   Global element styles and resets
+   =================================================================== */
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+
+
+/* ===================================================================
+   TYPOGRAPHY SYSTEM
+   Default typography styles that don't override Tailwind text classes
+   Note: These styles only apply to elements without Tailwind text utilities
+   =================================================================== */
+  :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    p {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+  }
