@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
@@ -17,21 +17,7 @@ interface Comment {
   text: string;
 }
 
-interface ToolDetailPageProps {
-  onBack: () => void;
-  tool?: {
-    name: string;
-    description: string;
-    category: string;
-    rating: number;
-    users: string;
-    price: string;
-    labels: any[];
-    banner?: string;
-  };
-}
-
-export function ToolDetailPage({ onBack, tool }: ToolDetailPageProps) {
+export function ToolDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -78,7 +64,7 @@ export function ToolDetailPage({ onBack, tool }: ToolDetailPageProps) {
     banner: "https://images.unsplash.com/photo-1737505599159-5ffc1dcbc08f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHRlY2hub2xvZ3klMjBuZXVyYWwlMjBuZXR3b3JrfGVufDF8fHx8MTc2MDAyMjM3M3ww&ixlib=rb-4.1.0&q=80&w=1080"
   };
 
-  const currentTool = tool || defaultTool;
+  const currentTool = defaultTool;
 
   const ratingDistribution = [
     { stars: 5, percentage: 75, count: 1823 },
@@ -87,6 +73,10 @@ export function ToolDetailPage({ onBack, tool }: ToolDetailPageProps) {
     { stars: 2, percentage: 3, count: 73 },
     { stars: 1, percentage: 1, count: 24 }
   ];
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleSubmitComment = () => {
     if (newComment.trim() && userRating > 0) {
@@ -107,10 +97,10 @@ export function ToolDetailPage({ onBack, tool }: ToolDetailPageProps) {
   return (
     <div className="min-h-screen bg-background pb-12">
       {/* Back Button */}
-      <div className="max-w-7xl mx-auto px-6 pt-8">
+      <div className="max-w-7xl mx-auto px-6 pt-4">
         <Button
           variant="ghost"
-          onClick={onBack}
+          onClick={() => window.history.back()}
           className="mb-4 hover:text-primary"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -122,20 +112,21 @@ export function ToolDetailPage({ onBack, tool }: ToolDetailPageProps) {
       <div className="relative w-full h-80 md:h-96 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
         {currentTool.banner && (
           <img
+          
             src={currentTool.banner}
             alt={currentTool.name}
             className="w-full h-full object-cover opacity-60"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
+        
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 -mt-32 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 -mt-40 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Main Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Tool Header */}
+             {/* Tool Header */}
             <Card className="bg-card border-border">
               <CardContent className="p-8">
                 <div className="flex items-start justify-between mb-4">

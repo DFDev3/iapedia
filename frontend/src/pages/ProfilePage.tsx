@@ -8,11 +8,9 @@ import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Star, ArrowLeft, Settings, Heart, MessageSquare, Calendar } from "lucide-react";
 
-interface ProfilePageProps {
-  onBack: () => void;
-}
 
-export function ProfilePage({ onBack }: ProfilePageProps) {
+
+export function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
     name: "Alex Johnson",
@@ -71,7 +69,6 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
         {/* Back Button */}
         <Button
           variant="ghost"
-          onClick={onBack}
           className="mb-6 hover:text-primary"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

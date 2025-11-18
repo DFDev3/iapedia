@@ -11,16 +11,16 @@ export function Footer() {
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
                 <div className="w-4 h-4 bg-background rounded-sm"></div>
               </div>
-              <span className="text-xl font-semibold">AI Repository</span>
+              <span className="text-xl font-semibold">Repositorio de IA's</span>
             </div>
             <p className="text-muted-foreground text-sm">
-              Your trusted gateway to cutting-edge artificial intelligence tools and technologies.
+              Tu repositorio de confianza para encontrar tecnologías y herramientas innovadoras de .
             </p>
           </div>
 
           {/* About */}
           <div className="space-y-4">
-            <h3 className="font-semibold">About</h3>
+            <h3 className="font-semibold">Acerca de nosotros</h3>
             <div className="space-y-2">
               <a href="#" className="block text-muted-foreground hover:text-foreground transition-colors text-sm">Our Mission</a>
               <a href="#" className="block text-muted-foreground hover:text-foreground transition-colors text-sm">Contact Us</a>
@@ -32,12 +32,12 @@ export function Footer() {
 
         <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
-            © 2025 AI Repository. All rights reserved.
+            © 2025 WikipedIA UNAB. Todos los derechos reservados.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Privacy</a>
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Terms</a>
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Support</a>
+            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Privacidad</a>
+            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Terminos y Condiciones</a>
+            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">Soporte</a>
           </div>
         </div>
       </div>

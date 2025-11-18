@@ -141,6 +141,11 @@ export const LABEL_CONFIGS = {
       text: "Marketing",
       type: 'capability' as const,
       className: "bg-orange-600/20 text-orange-300 border-orange-600/30"
+    },
+      api: {
+      text: "API's",
+      type: 'capability' as const,
+      className: "bg-orange-600/20 text-orange-300 border-orange-600/30"
     }
   },
   

@@ -1,26 +1,37 @@
 import { Search, Menu, X, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import '../styles/global.css';
 
-interface NavigationProps {
-  currentPage: string;
-  onPageChange: (page: string) => void;
+interface NavItem {
+  id: string;
+  label: string;
 }
 
-export function Navigation({ currentPage, onPageChange }: NavigationProps) {
+export function Navigation() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
 
-  const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'categories', label: 'Categories' },
-    { id: 'featured', label: 'Featured' },
-  ];
+  useEffect(() => {
+    fetch('http://localhost:4000/api/navigation')
+      .then(response => response.json())
+      .then(data => setNavItems(data))
+      .catch(error => console.error('Error fetching navigation:', error));
+  }, []);
 
-  const handleNavClick = (pageId: string) => {
-    onPageChange(pageId);
+  const handleNavClick = (id: string) => {
+    const path = id === 'home' ? '/' : `/${id}`;
+    navigate(path);
     setIsMenuOpen(false);
+  };
+
+  const getCurrentPage = () => {
+    if (location.pathname === '/') return 'home';
+    return location.pathname.slice(1);
   };
 
   return (
@@ -35,7 +46,7 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
               <div className="w-4 h-4 bg-background rounded-sm"></div>
             </div>
-            <span className="text-xl font-semibold">AI Repository</span>
+            <span className="text-xl font-semibold">WikipedIA</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -45,8 +56,8 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 className={`transition-colors ${
-                  currentPage === item.id 
-                    ? 'text-primary' 
+                  getCurrentPage() === item.id
+                    ? 'text-primary'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -60,17 +71,29 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input 
-                placeholder="Search AI tools..." 
+                placeholder="Busca herramientas..." 
                 className="pl-10 w-80 bg-card border-border"
               />
             </div>
-            <button 
+            <button
               onClick={() => handleNavClick('profile')}
               className="transition-opacity hover:opacity-80"
             >
               <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center cursor-pointer rounded-full">
                 <User className="w-5 h-5" />
               </div>
+            </button>
+            <button
+              onClick={() => handleNavClick('admin')}
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
+            >
+              Admin
+            </button>
+            <button
+              onClick={() => handleNavClick('admin-text')}
+              className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+            >
+              Admin Text
             </button>
           </div>
 
@@ -92,7 +115,7 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input 
-                  placeholder="Search AI tools..." 
+                  placeholder="Busca herramientas..." 
                   className="pl-10 w-full bg-card border-border"
                 />
               </div>
@@ -101,25 +124,19 @@ export function Navigation({ currentPage, onPageChange }: NavigationProps) {
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
                   className={`block w-full text-left px-3 py-2 transition-colors ${
-                    currentPage === item.id 
-                      ? 'text-primary' 
+                    getCurrentPage() === item.id
+                      ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
-              <button
-                onClick={() => handleNavClick('profile')}
-                className="flex items-center w-full text-left px-3 py-2 transition-colors text-muted-foreground hover:text-foreground"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </button>
             </div>
           </div>
         )}
       </div>
+      
     </nav>
   );
 }

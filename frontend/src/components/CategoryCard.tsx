@@ -8,11 +8,15 @@ interface CategoryCardProps {
   count: number;
   icon: React.ReactNode;
   gradient: string;
+  onClick?: () => void;
 }
 
-export function CategoryCard({ title, description, count, icon, gradient }: CategoryCardProps) {
+export function CategoryCard({ title, description, count, icon, gradient, onClick }: CategoryCardProps) {
   return (
-    <Card className="group relative overflow-hidden border-border bg-card hover:bg-card/80 transition-all duration-300 cursor-pointer">
+    <Card 
+      onClick={onClick}
+      className="group relative overflow-hidden border-border bg-card hover:bg-card/80 transition-all duration-300 cursor-pointer"
+    >
       <div className={`absolute top-0 left-0 w-full h-1 ${gradient}`}></div>
       
       <CardContent className="p-8">

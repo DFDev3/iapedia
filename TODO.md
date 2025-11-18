@@ -1,0 +1,2 @@
+- [ ] Edit ToolDetailPage.tsx: Change -mt-32 to -mt-40 in the main content div to move the card up and cover more of the banner.
+- [ ] Run frontend to verify the visual change.

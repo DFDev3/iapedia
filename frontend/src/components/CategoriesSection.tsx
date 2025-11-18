@@ -1,7 +1,11 @@
 import { CategoryCard } from "./CategoryCard";
 import { ImageAIIcon, TextAIIcon, SoundAIIcon, ProductivityIcon } from "./CategoryIcons";
 
-export function CategoriesSection() {
+interface CategoriesSectionProps {
+  onCategoryClick?: (category: any) => void;
+}
+
+export function CategoriesSection({ onCategoryClick }: CategoriesSectionProps) {
   const categories = [
     {
       title: "Image AI",
@@ -48,7 +52,11 @@ export function CategoriesSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
           {categories.map((category, index) => (
-            <CategoryCard key={index} {...category} />
+            <CategoryCard 
+              key={index} 
+              {...category} 
+              onClick={() => onCategoryClick?.(category)}
+            />
           ))}
         </div>
       </div>

@@ -1,17 +1,15 @@
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { ToolLabels, createPricingLabel, LABEL_CONFIGS, type ToolLabel } from "../components/ToolLabels";
+import { ToolLabels, createPricingLabel, LABEL_CONFIGS} from "../components/ToolLabels";
 import { ImageAIIcon, TextAIIcon, SoundAIIcon, ProductivityIcon } from "../components/CategoryIcons";
 import { Search, Filter, Grid, List } from "lucide-react";
 import { Input } from "../components/ui/input";
 
-interface CategoriesPageProps {
-  onViewTool?: (tool: any) => void;
-}
+export function CategoriesPage() {
 
-export function CategoriesPage({ onViewTool }: CategoriesPageProps) {
-  const categories = [
+  // Fallback categories if API fails
+  const fallbackCategories = [
     {
       title: "Image AI",
       description: "Transform, generate, and enhance images with cutting-edge AI models",
@@ -323,8 +321,11 @@ export function CategoriesPage({ onViewTool }: CategoriesPageProps) {
 
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {categories.map((category, index) => (
-            <Card key={index} className="group relative overflow-hidden border-border bg-card hover:bg-card/80 transition-all duration-300 cursor-pointer">
+          {fallbackCategories.map((category, index) => (
+            <Card 
+              key={index} 
+              className="group relative overflow-hidden border-border bg-card hover:bg-card/80 transition-all duration-300 cursor-pointer"
+            >
               <div className={`absolute top-0 left-0 w-full h-1 ${category.gradient}`}></div>
               
               <CardContent className="p-8">

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "./ui/card"; 
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { ToolLabels, createPricingLabel, LABEL_CONFIGS, type ToolLabel } from "./ToolLabels";
+import { ToolLabels, createPricingLabel, LABEL_CONFIGS} from "./ToolLabels";
 import { Star, ExternalLink, Users } from "lucide-react";
 
 interface FeaturedSectionProps {
@@ -23,12 +23,13 @@ export function FeaturedSection({ onViewTool }: FeaturedSectionProps) {
         LABEL_CONFIGS.capability.assistant,
         LABEL_CONFIGS.status.popular
       ],
-      gradient: "from-primary/20 to-blue-500/20"
+      gradient: "from-blue-500/20 to-cyan-500/20",
+      banner: "https://images.unsplash.com/photo-1737505599159-5ffc1dcbc08f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHRlY2hub2xvZ3klMjBuZXVyYWwlMjBuZXR3b3JrfGVufDF8fHx8MTc2MDAyMjM3M3ww&ixlib=rb-4.1.0&q=80&w=1080"
     },
     {
       name: "LinguaForge",
       description: "Next-generation language model for creative writing and analysis",
-      category: "Text AI", 
+      category: "Text AI",
       rating: 4.8,
       users: "1.8M",
       price: "$25/mo",
@@ -38,7 +39,8 @@ export function FeaturedSection({ onViewTool }: FeaturedSectionProps) {
         LABEL_CONFIGS.capability.gpt,
         LABEL_CONFIGS.status.featured
       ],
-      gradient: "from-accent/20 to-green-500/20"
+      gradient: "from-green-500/20 to-emerald-500/20",
+      banner: "https://images.unsplash.com/photo-1677442136019-21780ecad995?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHRlY2hub2xvZ3klMjB0ZXh0JTIwZ2VuZXJhdGlvbnxlbnwxfHx8fDE3NjAwMjIzNzN8MA&ixlib=rb-4.1.0&q=80&w=1080"
     },
     {
       name: "AudioCraft Pro",
@@ -53,9 +55,17 @@ export function FeaturedSection({ onViewTool }: FeaturedSectionProps) {
         LABEL_CONFIGS.capability.assistant,
         LABEL_CONFIGS.status.new
       ],
-      gradient: "from-purple-500/20 to-pink-500/20"
+      gradient: "from-yellow-500/20 to-orange-500/20",
+      banner: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHRlY2hub2xvZ3klMjBhdWRpb3xlbnwxfHx8fDE3NjAwMjIzNzN8MA&ixlib=rb-4.1.0&q=80&w=1080"
     }
   ];
+
+// "from-red-500/20 to-rose-500/20"
+// "from-indigo-500/20 to-violet-500/20"
+// "from-teal-500/20 to-sky-500/20"
+// "from-fuchsia-500/20 to-purple-500/20"
+// "from-amber-500/20 to-lime-500/20"
+// "from-slate-500/20 to-zinc-500/20"
 
   return (
     <section className="py-24 px-6 bg-muted/20">
@@ -72,10 +82,10 @@ export function FeaturedSection({ onViewTool }: FeaturedSectionProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {featuredTools.map((tool, index) => (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               onClick={() => onViewTool?.(tool)}
-              className="group relative overflow-hidden border-border bg-card hover:bg-card/80 transition-all duration-300 cursor-pointer"
+              className="group relative overflow-hidden border-border bg-card transition-all duration-300 cursor-pointer"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-50 group-hover:opacity-70 transition-opacity`}></div>
               

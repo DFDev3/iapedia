@@ -1,14 +1,11 @@
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { ToolLabels, createPricingLabel, LABEL_CONFIGS, type ToolLabel } from "../components/ToolLabels";
+import { ToolLabels, createPricingLabel, LABEL_CONFIGS} from "../components/ToolLabels";
 import { Star, Users, ExternalLink, Zap, TrendingUp, Award } from "lucide-react";
 
-interface FeaturedPageProps {
-  onViewTool?: (tool: any) => void;
-}
+export function FeaturedPage() {
 
-export function FeaturedPage({ onViewTool }: FeaturedPageProps) {
   const featuredSections = [
     {
       title: "Editor's Choice",
@@ -170,7 +167,6 @@ export function FeaturedPage({ onViewTool }: FeaturedPageProps) {
 
   const FeaturedToolCard = ({ tool }: { tool: any }) => (
     <Card 
-      onClick={() => onViewTool?.(tool)}
       className="group relative overflow-hidden border-border bg-card hover:bg-card/80 transition-all duration-300 cursor-pointer"
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-50 group-hover:opacity-70 transition-opacity`}></div>

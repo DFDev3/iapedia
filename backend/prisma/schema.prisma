@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanType {
+  FREE
+  PAID
+  FREEMIUM
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  iconUrl     String
+  bannerUrl   String?
+  createdAt   DateTime @default(now())
+  tools       Tool[]   // one category → many tools
+}
+
+model Tool {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String
+  url         String
+  imageUrl     String
+  bannerUrl    String?
+  categoryId  Int
+  category    Category   @relation(fields: [categoryId], references: [id])
+  planType    PlanType
+  isTrending  Boolean    @default(false)
+  isNew       Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+
+  // opposite relations
+  reviews     Review[]   @relation("ToolReviews")
+  favorites   Favorite[] @relation("ToolFavorites")
+}
+
+model Review {
+  id           Int      @id @default(autoincrement())
+  content      String?
+  rating       Int
+  createdAt    DateTime @default(now())
+  userId       Int
+  toolId       Int
+  helpfulVotes Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+  tool Tool @relation("ToolReviews", fields: [toolId], references: [id])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  userId    Int
+  toolId    Int
+
+  user User @relation(fields: [userId], references: [id])
+  tool Tool @relation("ToolFavorites", fields: [toolId], references: [id])
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String     @unique
+  password     String
+  joinedAt     DateTime   @default(now())
+  avatarUrl    String
+  bio          String
+  helpfulVotes Int        @default(0)
+
+  reviews      Review[]
+  favorites    Favorite[]
+}

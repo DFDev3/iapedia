@@ -55,36 +55,37 @@ export function HeroSection() {
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
         <h1 className="text-6xl md:text-8xl font-bold mb-8 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-          AI Repository
+          WikipedIA
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto">
-          Discover, explore, and access cutting-edge artificial intelligence tools. 
-          Your gateway to the future of intelligent technology.
+          Descubre, explora, y accede a las mejores herramientas IA de la última generación. 
+          Es tu oportunidad de hacer parte del futuro de la inteligencia artificial.
         </p>
 
         {/* Search Section */}
         <div className="max-w-2xl mx-auto mb-12">
           <div className="relative">
-            <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-muted-foreground w-6 h-6" />
-            <Input 
-              placeholder="Search for AI tools, models, or categories..." 
-              className="pl-16 pr-32 py-6 text-lg bg-card/50 backdrop-blur-sm border-border rounded-full"
+            <Search className="absolute left-6 top-1/2 transform -translate-y-1/2 text-white w-6 h-6" />
+            <Input
+              placeholder="Busca herramientas IA, modelos o categorías..."
+              className="pl-16 pr-32 py-6 text-lg bg-neutral-800 text-white placeholder:text-gray-300 border-gray-600 rounded-full"
             />
-            <Button size="lg" className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full">
+            <Button size="lg" className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">
               Search
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
 
+
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            Browse Categories
+            Categorías
           </Button>
           <Button size="lg" variant="outline" className="border-accent text-accent hover:bg-accent/10">
-            Featured Tools
+            Herramientas Populares
           </Button>
         </div>
       </div>
