@@ -8,11 +8,97 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const tools = await prisma.tool.findMany({
-      include: { category: true },
+      include: { 
+        category: true,
+        labels: {
+          include: {
+            label: true
+          }
+        },
+        reviews: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarUrl: true
+              }
+            }
+          }
+        },
+        favorites: {
+          select: {
+            userId: true
+          }
+        }
+      },
     });
     res.json(tools);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch tools" });
+  }
+});
+
+// POST to track a view (increment view count)
+router.post('/:id/view', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const tool = await prisma.tool.update({
+      where: { id },
+      data: {
+        viewCount: {
+          increment: 1
+        }
+      },
+      select: {
+        id: true,
+        viewCount: true
+      }
+    });
+    res.json(tool);
+  } catch (err) {
+    console.error('Error tracking view:', err);
+    res.status(500).json({ error: 'Failed to track view' });
+  }
+});
+
+// GET single tool by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const tool = await prisma.tool.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        labels: {
+          include: {
+            label: true
+          }
+        },
+        reviews: {
+          include: {
+            user: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+        favorites: {
+          include: {
+            user: true
+          }
+        }
+      }
+    });
+
+    if (!tool) {
+      return res.status(404).json({ error: 'Tool not found' });
+    }
+
+    res.json(tool);
+  } catch (err) {
+    console.error('Error fetching tool:', err);
+    res.status(500).json({ error: 'Failed to fetch tool' });
   }
 });
 
@@ -32,6 +118,7 @@ router.post("/", async (req, res) => {
       planType,
       isTrending,
       isNew,
+      labelIds,
     } = req.body;
 
     if (!name || !description || !url || !categoryId || !planType) {
@@ -48,19 +135,38 @@ router.post("/", async (req, res) => {
       });
     }
 
+    const toolData: any = {
+      name,
+      description,
+      url,
+      imageUrl,
+      bannerUrl,
+      categoryId: Number(categoryId),
+      planType,
+      isTrending,
+      isNew,
+    };
+
+    if (labelIds && labelIds.length > 0) {
+      toolData.labels = {
+        create: labelIds.map((labelId: number) => ({
+          label: {
+            connect: { id: labelId }
+          }
+        }))
+      };
+    }
+
     const newTool = await prisma.tool.create({
-      data: {
-        name,
-        description,
-        url,
-        imageUrl,
-        bannerUrl,
-        categoryId: Number(categoryId),
-        planType,
-        isTrending,
-        isNew,
+      data: toolData,
+      include: { 
+        category: true,
+        labels: {
+          include: {
+            label: true
+          }
+        }
       },
-      include: { category: true },
     });
 
     res.status(201).json(newTool);
@@ -96,6 +202,7 @@ router.put('/:id', async (req, res) => {
       planType,
       isTrending,
       isNew,
+      labelIds,
     } = req.body;
 
     // validate existence
@@ -108,19 +215,42 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid planType' });
     }
 
+    // Build update data
+    const updateData: any = {
+      name,
+      description,
+      url,
+      imageUrl,
+      bannerUrl,
+      categoryId: Number(categoryId),
+      planType,
+      isTrending,
+      isNew,
+    };
+
+    if (labelIds) {
+      updateData.labels = {
+        deleteMany: {},
+        create: labelIds.map((labelId: number) => ({
+          label: {
+            connect: { id: labelId }
+          }
+        }))
+      };
+    }
+
+    // Update tool and handle labels
     const updatedTool = await prisma.tool.update({
       where: { id },
-      data: {
-        name,
-        description,
-        url,
-        imageUrl,
-        bannerUrl,
-        categoryId: Number(categoryId),
-        planType,
-        isTrending,
-        isNew,
-      },
+      data: updateData,
+      include: {
+        category: true,
+        labels: {
+          include: {
+            label: true
+          }
+        }
+      }
     });
 
     res.json(updatedTool);

@@ -22,8 +22,8 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold">Acerca de nosotros</h3>
             <div className="space-y-2">
-              <a href="#" className="block text-muted-foreground hover:text-foreground transition-colors text-sm">Our Mission</a>
-              <a href="#" className="block text-muted-foreground hover:text-foreground transition-colors text-sm">Contact Us</a>
+              <a href="#" className="block text-muted-foreground hover:text-foreground transition-colors text-sm">Nuestra Misión</a>
+              <a href="#" className="block text-muted-foreground hover:text-foreground transition-colors text-sm">Contáctanos</a>
             </div>
           </div>
         </div>

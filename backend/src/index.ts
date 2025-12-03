@@ -4,6 +4,10 @@ import dotenv from "dotenv";
 import routes from "./routes/routes.js";
 import tools from "./routes/tools.js";
 import categories from './routes/categories.js'
+import seed from './routes/seed.js'
+import labels from './routes/labels.js'
+import users from './routes/users.js'
+import reviews from './routes/reviews.js'
 import path from "path";
 import { fileURLToPath } from "url";
 import { PrismaClient } from './generated/prisma/client.js';
@@ -33,6 +37,18 @@ app.use('/api/tools', tools)
 
 // All categories query
 app.use('/api/categories', categories)
+
+// Labels management
+app.use('/api/labels', labels)
+
+// Users management
+app.use('/api/users', users)
+
+// Reviews management
+app.use('/api/reviews', reviews)
+
+// Seed route
+app.use('/api/seed', seed)
 
 // Fallback for React Router (must stay last)
 app.get(/.*/, (_, res) => {

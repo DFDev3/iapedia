@@ -8,20 +8,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 enum PlanType {
   FREE
   PAID
   FREEMIUM
 }
 
+enum LabelCategory {
+  PRICING      // Free, Paid, Trial, etc.
+  CAPABILITY   // Assistant, Automation, API, etc.
+  STATUS       // Popular, New, Trending, Featured
+  SPECIALTY    // Image, Text, Audio, Video, Code, Design, etc.
+}
+
 model Category {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String
-  iconUrl     String
-  bannerUrl   String?
-  createdAt   DateTime @default(now())
-  tools       Tool[]   // one category → many tools
+  id              Int      @id @default(autoincrement())
+  name            String   @unique
+  description     String   // Short one-liner for cards
+  fullDescription String   // Complete description for detail page
+  iconUrl         String
+  bannerUrl       String?
+  createdAt       DateTime @default(now())
+  tools           Tool[]   // one category → many tools
+}
+
+model Label {
+  id          Int            @id @default(autoincrement())
+  name        String         // e.g., "Popular", "Free Trial", "AI Assistant"
+  slug        String         @unique // e.g., "popular", "free-trial", "ai-assistant"
+  category    LabelCategory  // PRICING, CAPABILITY, STATUS, or SPECIALTY
+  color       String?        // hex color for display (e.g., "#3b82f6")
+  description String?
+  createdAt   DateTime       @default(now())
+  
+  tools       ToolLabel[]
+}
+
+model ToolLabel {
+  id        Int      @id @default(autoincrement())
+  toolId    Int
+  labelId   Int
+  createdAt DateTime @default(now())
+  
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  label     Label    @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  
+  @@unique([toolId, labelId]) // Prevent duplicate labels on same tool
 }
 
 model Tool {
@@ -36,11 +73,13 @@ model Tool {
   planType    PlanType
   isTrending  Boolean    @default(false)
   isNew       Boolean    @default(false)
+  viewCount   Int        @default(0)
   createdAt   DateTime   @default(now())
 
   // opposite relations
-  reviews     Review[]   @relation("ToolReviews")
-  favorites   Favorite[] @relation("ToolFavorites")
+  reviews     Review[]     @relation("ToolReviews")
+  favorites   Favorite[]   @relation("ToolFavorites")
+  labels      ToolLabel[]  // many-to-many with Label
 }
 
 model Review {
@@ -71,6 +110,7 @@ model User {
   name         String
   email        String     @unique
   password     String
+  role         UserRole   @default(USER)
   joinedAt     DateTime   @default(now())
   avatarUrl    String
   bio          String

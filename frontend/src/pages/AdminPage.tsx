@@ -1,79 +1,194 @@
-import { useState, useEffect } from "react";
-import { Button } from "../components/ui/button";
+// src/pages/AdminDashboard.tsx
+
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "../components/ui/alert-dialog";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
+import { Button } from "../components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
+import { Label } from "../components/ui/label";
+import { Checkbox } from "../components/ui/checkbox";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+  fullDescription: string;
+  iconUrl: string;
+  bannerUrl?: string;
+  createdAt: string;
+}
+
+interface Label {
+  id: number;
+  name: string;
+  slug: string;
+  category: string;
+  color: string;
+  description?: string;
+}
 
 interface Tool {
   id: number;
   name: string;
   description: string;
   url: string;
-  imageUrl?: string;
+  imageUrl: string;
   bannerUrl?: string;
   categoryId: number;
   planType: string;
   isTrending: boolean;
   isNew: boolean;
   createdAt: string;
+  category: Category;
+  labels?: Array<{ label: Label }>;
 }
 
-interface Category {
-  id: number;
-  name: string;
-  description?: string;
-  imageUrl?: string;
-  bannerUrl?: string;
-  createdAt: string;
+interface AdminDashboardProps {
+  onBack?: () => void;
 }
 
-export function AdminPage() {
+export function AdminPage({ onBack }: AdminDashboardProps) {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
-  const [isAddFormVisible, setIsAddFormVisible] = useState(false);
+  const [labels, setLabels] = useState<Label[]>([]);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [toolDialogOpen, setToolDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState<"category" | "tool">("category");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingTool, setEditingTool] = useState<Tool | null>(null);
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isAddCategoryFormVisible, setIsAddCategoryFormVisible] =
-    useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-
-  const [addToolForm, setAddToolForm] = useState({
-    name: '',
-    description: '',
-    url: '',
-    bannerUrl: '',
-    imageUrl: '',
-    categoryId: '',
-    planType: '',
-    isTrending: false,
-    isNew: false,
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+    description: "",
+    fullDescription: "",
+    iconUrl: "",
   });
 
-  // Query
-  useEffect(() => {
-    fetch("http://localhost:4000/api/tools")
-      .then((res) => res.json())
-      .then((data) => setTools(data))
-      .catch((err) => console.error("Error fetching tools:", err));
+  const [toolForm, setToolForm] = useState({
+    name: "",
+    description: "",
+    url: "",
+    bannerUrl: "",
+    imageUrl: "",
+    categoryId: "",
+    planType: "", 
+    isTrending: false,
+    isNew: false,
+    selectedLabels: [] as number[],
+  });
 
+  // Fetch initial data
+  useEffect(() => {
     fetch("http://localhost:4000/api/categories")
       .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch((err) => console.error("Error fetching categories:", err));
+      .then(setCategories)
+      .catch(() => toast.error("Failed to fetch categories"));
+
+    fetch("http://localhost:4000/api/tools")
+      .then((res) => res.json())
+      .then(setTools)
+      .catch(() => toast.error("Failed to fetch tools"));
+
+    fetch("http://localhost:4000/api/labels")
+      .then((res) => res.json())
+      .then(setLabels)
+      .catch(() => toast.error("Failed to fetch labels"));
   }, []);
 
-  const handleAddTool = async () => {
-    setIsAddFormVisible(false);
-    const { name, description, url, bannerUrl, imageUrl, categoryId, planType, isTrending, isNew } = addToolForm;
-    const categoryIdNum = parseInt(categoryId);
-    if (!name || !description || !categoryIdNum) {
-      alert("Please fill all required fields.");
+  // ---- CATEGORY ----
+  const handleSaveCategory = async () => {
+    if (!categoryForm.name || !categoryForm.description) {
+      toast.error("Please fill in all fields");
       return;
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/tools", {
-        method: "POST",
+      const method = editingCategory ? "PUT" : "POST";
+      const url = editingCategory
+        ? `http://localhost:4000/api/categories/${editingCategory.id}`
+        : "http://localhost:4000/api/categories";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categoryForm),
+      });
+
+      if (!response.ok) throw new Error("Failed to save category");
+      const data = await response.json();
+
+      if (editingCategory) {
+        setCategories((prev) =>
+          prev.map((c) => (c.id === data.id ? data : c))
+        );
+        toast.success("Category updated");
+      } else {
+        setCategories((prev) => [...prev, data]);
+        toast.success("Category added");
+      }
+
+      setCategoryDialogOpen(false);
+      setEditingCategory(null);
+    } catch {
+      toast.error("Error saving category");
+    }
+  };
+
+  // ---- TOOL ----
+  const handleSaveTool = async () => {
+    const { name, description, url, bannerUrl, imageUrl, categoryId, planType, isTrending, isNew, selectedLabels } = toolForm;
+    const categoryIdNum = parseInt(categoryId);
+    if (!name || !description || !categoryIdNum) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      const method = editingTool ? "PUT" : "POST";
+      const endpoint = editingTool
+        ? `http://localhost:4000/api/tools/${editingTool.id}`
+        : "http://localhost:4000/api/tools";
+
+      const response = await fetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
@@ -85,675 +200,381 @@ export function AdminPage() {
           planType,
           isTrending,
           isNew,
+          labelIds: selectedLabels,
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to add tool");
 
-      const newTool = await res.json();
-      setTools((prev) => [...prev, newTool]);
-      alert("Tool added successfully.");
-      setIsAddFormVisible(false);
-      setAddToolForm({
-        name: '',
-        description: '',
-        url: '',
-        bannerUrl: '',
-        imageUrl: '',
-        categoryId: '',
-        planType: '',
-        isTrending: false,
-        isNew: false,
-      });
+      // - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+      // - [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+      if (!response.ok) throw new Error("Failed to save tool");
+      const data = await response.json();
+
+      if (editingTool) {
+        setTools((prev) =>
+          prev.map((t) => (t.id === data.id ? data : t))
+        );
+        toast.success("Tool updated");
+      } else {
+        setTools((prev) => [...prev, data]);
+        toast.success("Tool added");
+      }
+
+      setToolDialogOpen(false);
+      setEditingTool(null);
     } catch (err) {
-      console.error("Error adding tool:", err);
-      alert(
-        "Error adding tool: " +
-          (err instanceof Error ? err.message : String(err))
-      );
+      toast.error("Error saving tool: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 
-  const handleEditTool = (tool: Tool) => {
-    setEditingTool(tool);
-  };
+  // ---- DELETE ----
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
 
-  // const handleDeleteTool = (id: number) => {
-  //   // TODO: Implement delete functionality
-  //   //setTools(tools.filter(tool => tool.id !== id));
-  // };
-
-  const handleSaveEdit = async () => {
-    if (!editingTool) return;
+    const endpoint =
+      deleteType === "category"
+        ? `http://localhost:4000/api/categories/${deleteId}`
+        : `http://localhost:4000/api/tools/${deleteId}`;
 
     try {
-      const response = await fetch(
-        `http://localhost:4000/api/tools/${editingTool.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(editingTool),
-        }
-      );
+      await fetch(endpoint, { method: "DELETE" });
+      if (deleteType === "category")
+        setCategories((prev) => prev.filter((c) => c.id !== deleteId));
+      else setTools((prev) => prev.filter((t) => t.id !== deleteId));
 
-      if (!response.ok) throw new Error("Failed to update tool");
-
-      const updatedTool = await response.json();
-
-      // Optionally refresh tool list or update local state
-      setTools((prev) =>
-        prev.map((tool) => (tool.id === updatedTool.id ? updatedTool : tool))
-      );
-
-      // Reset form
-      setEditingTool(null);
-    } catch (error) {
-      console.error("Error updating tool:", error);
+      toast.success(`${deleteType} deleted`);
+    } catch {
+      toast.error(`Failed to delete ${deleteType}`);
+    } finally {
+      setDeleteDialogOpen(false);
     }
   };
 
-  const handleAddCategory = () => {
-    // TODO: Implement add functionality
-    setIsAddCategoryFormVisible(false);
-  };
-
-  const handleEditCategory = (category: Category) => {
-    setEditingCategory(category);
-  };
-
-  // const handleDeleteCategory = (id: number) => {
-  //   // TODO: Implement delete functionality
-  //   //setCategories(categories.filter(category => category.id !== id));
-  // };
-
-  const handleSaveCategoryEdit = () => {
-    // TODO: Implement save edit functionality
-    setEditingCategory(null);
-  };
-
+  // ---- UI ----
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">
-          Admin Dashboard - Tools Management
-        </h1>
-        {/* <button
-          onClick={async () => {
-            await fetch("http://localhost:4000/api/tools", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                name: "Sample Tool 3",
-                description: "Demo record created from frontend",
-                url: "http://example.com",
-                iconUrl: ".",
-                bannerUrl: ".",
-                planType: "FREE",
-                categoryId: 1, // must exist
-                isTrending: false,
-                isNew: true,
-              }),
-            });
-            alert("Tool added. Reload the page to see it.");
-          }}
-          className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Add Test Tool
-        </button> */}
-
-        <Button
-          onClick={() => setIsAddFormVisible(!isAddFormVisible)}
-          variant="default"
-        >
-          Add Tool
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
         </Button>
-      </div>
 
-      {isAddFormVisible && (
-        <div className="mb-8 p-4 border rounded">
-          <h2 className="text-xl font-semibold mb-4">Add New Tool</h2>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium">
-                Name
-              </label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Tool name"
-                value={addToolForm.name}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium"
-              >
-                Description
-              </label>
-              <Textarea
-                id="description"
-                placeholder="Tool description"
-                value={addToolForm.description}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, description: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label htmlFor="url" className="block text-sm font-medium">
-                Website Url
-              </label>
-              <Input
-                id="url"
-                type="text"
-                placeholder="Website Url"
-                value={addToolForm.url}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, url: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label htmlFor="bannerUrl" className="block text-sm font-medium">
-                Banner URL
-              </label>
-              <Input
-                id="bannerUrl"
-                type="text"
-                placeholder="Banner URL"
-                value={addToolForm.bannerUrl}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, bannerUrl: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label htmlFor="ImageUrl" className="block text-sm font-medium">
-                Image URL
-              </label>
-              <Input
-                id="imageUrl"
-                type="text"
-                placeholder="Image URL"
-                value={addToolForm.imageUrl}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-              />
-            </div>
+        <h1 className="text-4xl md:text-5xl mb-4">Admin Dashboard</h1>
+        <p className="text-xl text-muted-foreground mb-8">
+          Manage categories and tools
+        </p>
 
-            <div>
-              <label htmlFor="categoryId" className="block text-sm font-medium">
-                Category
-              </label>
-              <select
-                id="categoryId"
-                value={addToolForm.categoryId}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, categoryId: e.target.value }))}
-                className="w-full p-2 border rounded text-black"
-              >
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="planType" className="block text-sm font-medium">
-                Plan Type
-              </label>
-              <select
-                id="planType"
-                value={addToolForm.planType}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, planType: e.target.value }))}
-                className="w-full p-2 border rounded text-black"
-              >
-                <option value="">Select a plan type</option>
-                <option value="FREE">Free</option>
-                <option value="PAID">Paid</option>
-                <option value="FREEMIUM">Freemium</option>
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                id="isTrending"
-                type="checkbox"
-                checked={addToolForm.isTrending}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, isTrending: e.target.checked }))}
-              />
-              <label htmlFor="isTrending" className="text-sm">
-                Trending
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                id="isNew"
-                type="checkbox"
-                checked={addToolForm.isNew}
-                onChange={(e) => setAddToolForm(prev => ({ ...prev, isNew: e.target.checked }))}
-              />
-              <label htmlFor="isNew" className="text-sm">
-                New
-              </label>
-            </div>
-            <Button
-              onClick={handleAddTool}
-              className="w-full"
-            >
-              Add Tool
-            </Button>
-          </div>
-        </div>
-      )}
+        <Tabs defaultValue="categories">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="tools">Tools</TabsTrigger>
+          </TabsList>
 
-      <div className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-4">Tools</h2>
-        <table className="w-full border-collapse border">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-2">ID</th>
-              <th className="text-left p-2">Name</th>
-              <th className="text-left p-2">Description</th>
-              <th className="text-left p-2">Plan Type</th>
-              <th className="text-left p-2">Trending</th>
-              <th className="text-left p-2">New</th>
-              <th className="text-left p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tools.map((tool) => (
-              <tr key={tool.id} className="border-b">
-                <td className="p-2">{tool.id}</td>
-                <td className="p-2">{tool.name}</td>
-                <td className="p-2">{tool.description}</td>
-                <td className="p-2">{tool.planType}</td>
-                <td className="p-2">{tool.isTrending ? "Yes" : "No"}</td>
-                <td className="p-2">{tool.isNew ? "Yes" : "No"}</td>
-                <td className="p-2">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditTool(tool)}
-                      className="bg-gray-200 px-2 py-1 rounded text-sm hover:bg-gray-300"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      // onClick={() => handleDeleteTool(tool.id)}
-                      className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Edit Form */}
-      {editingTool && (
-        <div className="mt-8 p-4 border rounded">
-          <h2 className="text-xl font-semibold mb-4">Edit Tool</h2>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="edit-name" className="block text-sm font-medium">
-                Name
-              </label>
-              <input
-                id="edit-name"
-                className="w-full p-2 border rounded text-black"
-                type="text"
-                value={editingTool.name || ""}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, name: e.target.value } : prev
-                  )
-                }
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="edit-description"
-                className="block text-sm font-medium"
-              >
-                Description
-              </label>
-              <input
-                id="edit-description"
-                type="text"
-                value={editingTool.description || ""}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, description: e.target.value } : prev
-                  )
-                }
-                className="w-full p-2 border rounded text-black"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="edit-url" className="block text-sm font-medium">
-                Website Url
-              </label>
-              <input
-                id="edit-url"
-                type="text"
-                value={editingTool.url || ""}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, url: e.target.value } : prev
-                  )
-                }
-                className="w-full p-2 border rounded text-black"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="edit-bannerUrl"
-                className="block text-sm font-medium"
-              >
-                Banner URL
-              </label>
-              <input
-                id="edit-bannerUrl"
-                type="text"
-                value={editingTool.bannerUrl || ""}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, imageUrl: e.target.value } : prev
-                  )
-                }
-                className="w-full p-2 border rounded text-black"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="edit-imageUrl"
-                className="block text-sm font-medium"
-              >
-                Image URL
-              </label>
-              <input
-                id="edit-imageUrl"
-                type="text"
-                value={editingTool.imageUrl || ""}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev
-                      ? { ...prev, categoryId: Number(e.target.value) }
-                      : prev
-                  )
-                }
-                className="w-full p-2 border rounded text-black"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="edit-categoryId"
-                className="block text-sm font-medium"
-              >
-                Category
-              </label>
-              <select
-                id="edit-categoryId"
-                value={editingTool.categoryId || ""}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, planType: e.target.value } : prev
-                  )
-                }
-                className="w-full p-2 border rounded text-black"
-              >
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="edit-planType"
-                className="block text-sm font-medium"
-              >
-                Plan Type
-              </label>
-              <select
-                id="edit-planType"
-                value={editingTool.planType || ""}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, planType: e.target.value } : prev
-                  )
-                }
-                className="w-full p-2 border rounded text-black"
-              >
-                <option value="">Select a plan</option>
-                <option value="FREE">Free</option>
-                <option value="PAID">Paid</option>
-                <option value="FREEMIUM">Freemium</option>
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                id="edit-isTrending"
-                type="checkbox"
-                checked={editingTool.isTrending || false}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, isTrending: e.target.checked } : prev
-                  )
-                }
-              />
-              <label htmlFor="edit-isTrending" className="text-sm">
-                Trending
-              </label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                id="edit-isNew"
-                type="checkbox"
-                checked={editingTool.isNew || false}
-                onChange={(e) =>
-                  setEditingTool((prev) =>
-                    prev ? { ...prev, isNew: e.target.checked } : prev
-                  )
-                }
-              />
-              <label htmlFor="edit-isNew" className="text-sm">
-                New
-              </label>
-            </div>
-
-            <div className="flex space-x-2">
-              <button
-                onClick={handleSaveEdit}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              >
-                Save Changes
-              </button>
-              <button
-                onClick={() => setEditingTool(null)}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Categories Section */}
-      <div className="mt-12">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Categories Management</h1>
-          <button
-            onClick={async () => {
-              await fetch("http://localhost:4000/api/categories", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  name: "Sample Category",
-                  description: "Demo category created from frontend",
-                  iconUrl: ".",
-                }),
-              });
-              alert("Category added. Reload the page to see it.");
-            }}
-            className="mb-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Add Test Category
-          </button>
-
-          <button
-            onClick={() =>
-              setIsAddCategoryFormVisible(!isAddCategoryFormVisible)
-            }
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Add Category
-          </button>
-        </div>
-
-        {isAddCategoryFormVisible && (
-          <div className="mb-8 p-4 border rounded">
-            <h2 className="text-xl font-semibold mb-4">Add New Category</h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="category-name"
-                  className="block text-sm font-medium"
-                >
-                  Name
-                </label>
-                <input
-                  id="category-name"
-                  type="text"
-                  placeholder="Category name"
-                  className="w-full p-2 border rounded text-black"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="category-description"
-                  className="block text-sm font-medium"
-                >
-                  Description
-                </label>
-                <input
-                  id="category-description"
-                  type="text"
-                  placeholder="Category description"
-                  className="w-full p-2 border rounded text-black"
-                />
-              </div>
-              <button
-                onClick={handleAddCategory}
-                className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              >
-                Add Category
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="border rounded p-4">
-          <h2 className="text-xl font-semibold mb-4">Categories</h2>
-          <table className="w-full border-collapse border">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-2">ID</th>
-                <th className="text-left p-2">Name</th>
-                <th className="text-left p-2">Description</th>
-                <th className="text-left p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((category) => (
-                <tr key={category.id} className="border-b">
-                  <td className="p-2">{category.id}</td>
-                  <td className="p-2">{category.name}</td>
-                  <td className="p-2">{category.description || ""}</td>
-                  <td className="p-2">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditCategory(category)}
-                        className="bg-gray-200 px-2 py-1 rounded text-sm hover:bg-gray-300"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        // onClick={() => handleDeleteCategory(category.id)}
-                        className="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
+          {/* -------- CATEGORIES -------- */}
+          <TabsContent value="categories" className="mt-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl">Categories ({categories.length})</h2>
+              <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => {
+                    setEditingCategory(null);
+                    setCategoryForm({
+                      name: "",
+                      description: "",
+                      fullDescription: "",
+                      iconUrl: "",
+                    });
+                  }}>
+                    <Plus className="w-4 h-4 mr-2" /> Add Category
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{editingCategory ? "Edit" : "Add"} Category</DialogTitle>
+                    <DialogDescription>
+                      {editingCategory ? "Update details" : "Enter new category details"}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div>
+                      <Label>Name</Label>
+                      <Input
+                        value={categoryForm.name}
+                        onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                      />
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Edit Category Form */}
-        {editingCategory && (
-          <div className="mt-8 p-4 border rounded">
-            <h2 className="text-xl font-semibold mb-4">Edit Category</h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="edit-category-name"
-                  className="block text-sm font-medium"
-                >
-                  Name
-                </label>
-                <input
-                  id="edit-category-name"
-                  type="text"
-                  defaultValue={editingCategory.name}
-                  className="w-full p-2 border rounded text-black"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="edit-category-description"
-                  className="block text-sm font-medium"
-                >
-                  Description
-                </label>
-                <input
-                  id="edit-category-description"
-                  type="text"
-                  defaultValue={editingCategory.description}
-                  className="w-full p-2 border rounded text-black"
-                />
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={handleSaveCategoryEdit}
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                >
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => setEditingCategory(null)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
+                    <div>
+                      <Label>Short Description (for cards)</Label>
+                      <Input
+                        value={categoryForm.description}
+                        onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                        placeholder="Brief one-liner description"
+                      />
+                    </div>
+                    <div>
+                      <Label>Full Description (for detail page)</Label>
+                      <Textarea
+                        value={categoryForm.fullDescription}
+                        onChange={(e) => setCategoryForm({ ...categoryForm, fullDescription: e.target.value })}
+                        placeholder="Complete detailed description"
+                        rows={4}
+                      />
+                    </div>
+                    <div>
+                      <Label>Icon URL</Label>
+                      <Input
+                        value={categoryForm.iconUrl}
+                        onChange={(e) => setCategoryForm({ ...categoryForm, iconUrl: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setCategoryDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSaveCategory}>{editingCategory ? "Update" : "Create"}</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
-          </div>
-        )}
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categories.map((cat) => (
+                    <TableRow key={cat.id}>
+                      <TableCell>{cat.name}</TableCell>
+                      <TableCell className="max-w-sm truncate">{cat.description}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => {
+                          setEditingCategory(cat);
+                          setCategoryForm({
+                            name: cat.name,
+                            description: cat.description,
+                            fullDescription: cat.fullDescription,
+                            iconUrl: cat.iconUrl,
+                          });
+                          setCategoryDialogOpen(true);
+                        }}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => {
+                          setDeleteType("category");
+                          setDeleteId(cat.id);
+                          setDeleteDialogOpen(true);
+                        }}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          {/* -------- TOOLS -------- */}
+          <TabsContent value="tools" className="mt-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl">Tools ({tools.length})</h2>
+              <Dialog open={toolDialogOpen} onOpenChange={setToolDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => {
+                    setEditingTool(null);
+                    setToolForm({
+                      name: "",
+                      description: "",
+                      url: "",
+                      bannerUrl: "",
+                      imageUrl: "",
+                      categoryId: "",
+                      planType: "",
+                      isTrending: false,
+                      isNew: false,
+                      selectedLabels: [],
+                    });
+                  }}>
+                    <Plus className="w-4 h-4 mr-2" /> Add Tool
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingTool ? "Edit" : "Add"} Tool</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div><Label>Name</Label><Input value={toolForm.name} onChange={(e) => setToolForm({ ...toolForm, name: e.target.value })} /></div>
+                    <div><Label>Description</Label><Textarea value={toolForm.description} onChange={(e) => setToolForm({ ...toolForm, description: e.target.value })} /></div>
+                    <div><Label>URL</Label><Input value={toolForm.url} onChange={(e) => setToolForm({ ...toolForm, url: e.target.value })} /></div>
+                    <div><Label>Banner URL</Label><Input value={toolForm.bannerUrl} onChange={(e) => setToolForm({ ...toolForm, bannerUrl: e.target.value })} /></div>
+                    <div><Label>Image URL</Label><Input value={toolForm.imageUrl} onChange={(e) => setToolForm({ ...toolForm, imageUrl: e.target.value })} /></div>
+                    <div>
+                      <Label>Category</Label>
+                      <Select value={toolForm.categoryId} onValueChange={(v) => setToolForm({ ...toolForm, categoryId: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Plan Type</Label>
+                      <Select value={toolForm.planType} onValueChange={(v) => setToolForm({ ...toolForm, planType: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select plan type" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="FREE">FREE</SelectItem>
+                          <SelectItem value="PAID">PAID</SelectItem>
+                          <SelectItem value="FREEMIUM">FREEMIUM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="isTrending" checked={toolForm.isTrending} onCheckedChange={(checked: boolean) => setToolForm({ ...toolForm, isTrending: checked })} />
+                      <Label htmlFor="isTrending">Trending</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="isNew" checked={toolForm.isNew} onCheckedChange={(checked: boolean) => setToolForm({ ...toolForm, isNew: checked })} />
+                      <Label htmlFor="isNew">New</Label>
+                    </div>
+
+                    {/* Label Selection */}
+                    <div className="space-y-3">
+                      <Label>Labels</Label>
+                      <div className="space-y-4">
+                        {["PRICING", "CAPABILITY", "STATUS", "SPECIALTY"].map((category) => {
+                          const categoryLabels = labels.filter((l) => l.category === category);
+                          if (categoryLabels.length === 0) return null;
+
+                          return (
+                            <div key={category} className="space-y-2">
+                              <h3 className="text-sm font-medium text-muted-foreground capitalize">
+                                {category.toLowerCase()}
+                              </h3>
+                              <div className="flex flex-wrap gap-2">
+                                {categoryLabels.map((label) => {
+                                  const isSelected = toolForm.selectedLabels.includes(label.id);
+                                  return (
+                                    <button
+                                      key={label.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setToolForm({
+                                          ...toolForm,
+                                          selectedLabels: isSelected
+                                            ? toolForm.selectedLabels.filter((id) => id !== label.id)
+                                            : [...toolForm.selectedLabels, label.id],
+                                        });
+                                      }}
+                                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                        isSelected
+                                          ? "text-white shadow-md"
+                                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                      }`}
+                                      style={
+                                        isSelected
+                                          ? { backgroundColor: label.color }
+                                          : undefined
+                                      }
+                                    >
+                                      {label.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setToolDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSaveTool}>{editingTool ? "Update" : "Create"}</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Plan Type</TableHead>
+                    <TableHead>Trending</TableHead>
+                    <TableHead>New</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tools.map((tool) => {
+                    const category = categories.find(c => c.id === tool.categoryId);
+                    return (
+                      <TableRow key={tool.id}>
+                        <TableCell>{tool.name}</TableCell>
+                        <TableCell>{category?.name || 'Unknown'}</TableCell>
+                        <TableCell className="max-w-xs truncate">{tool.description}</TableCell>
+                        <TableCell>{tool.planType}</TableCell>
+                        <TableCell>{tool.isTrending ? 'Yes' : 'No'}</TableCell>
+                        <TableCell>{tool.isNew ? 'Yes' : 'No'}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setEditingTool(tool);
+                            setToolForm({
+                              ...tool,
+                              categoryId: tool.categoryId.toString(),
+                              bannerUrl: tool.bannerUrl || "",
+                              imageUrl: tool.imageUrl || "",
+                              selectedLabels: tool.labels?.map((tl) => tl.label.id) || [],
+                            });
+                            setToolDialogOpen(true);
+                          }}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setDeleteType("tool");
+                            setDeleteId(tool.id);
+                            setDeleteDialogOpen(true);
+                          }}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* DELETE CONFIRM */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={handleConfirmDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

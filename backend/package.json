@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "seed": "tsx prisma/seed-with-labels.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed-with-labels.ts"
   },
   "keywords": [],
   "author": "",

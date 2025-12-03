@@ -6,7 +6,6 @@ const navItems = [
   { id: 'home', label: 'Home' },
   { id: 'categories', label: 'Categories' },
   { id: 'featured', label: 'Featured' },
-  { id: 'profile', label: 'Profile' },
 ];
 
 // Static data for pages (since frontend now uses static data)

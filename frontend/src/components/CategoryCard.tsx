@@ -27,7 +27,7 @@ export function CategoryCard({ title, description, count, icon, gradient, onClic
             </div>
           </div>
           <Badge variant="secondary" className="text-xs">
-            {count} tools
+            {count} herramientas
           </Badge>
         </div>
 
@@ -40,7 +40,7 @@ export function CategoryCard({ title, description, count, icon, gradient, onClic
         </p>
 
         <div className="flex items-center text-primary group-hover:text-accent transition-colors">
-          <span className="mr-2">Explore</span>
+          <span className="mr-2">Explorar</span>
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </CardContent>

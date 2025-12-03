@@ -1,8 +1,9 @@
-import { Search, Menu, X, User } from "lucide-react";
+import { Search, Menu, X, User, Database } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import '../styles/global.css';
 
 interface NavItem {
@@ -10,18 +11,49 @@ interface NavItem {
   label: string;
 }
 
+interface UserData {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  avatarUrl?: string;
+  isLoggedIn: boolean;
+}
+
 export function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [user, setUser] = useState<UserData | null>(null);
 
   useEffect(() => {
     fetch('http://localhost:4000/api/navigation')
       .then(response => response.json())
       .then(data => setNavItems(data))
       .catch(error => console.error('Error fetching navigation:', error));
+
+    // Check if user is logged in
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      console.log('Navigation: User data loaded:', parsedUser);
+      setUser(parsedUser);
+    }
   }, []);
+
+  // Re-check user data when location changes (after login/logout)
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      console.log('Navigation: User updated on location change:', parsedUser);
+      setUser(parsedUser);
+    } else {
+      setUser(null);
+    }
+  }, [location]);
 
   const handleNavClick = (id: string) => {
     const path = id === 'home' ? '/' : `/${id}`;
@@ -29,9 +61,52 @@ export function Navigation() {
     setIsMenuOpen(false);
   };
 
+  const handleRunSeeder = async () => {
+    if (!confirm('Esto eliminará todos los datos existentes y volverá a sembrar la base de datos. ¿Estás seguro?')) {
+      return;
+    }
+
+    setIsSeeding(true);
+    try {
+      const response = await fetch('http://localhost:4000/api/seed/run', {
+        method: 'POST',
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const stats = data.stats;
+        const message = stats.users 
+          ? `¡Base de datos sembrada! ${stats.users} usuarios, ${stats.labels} etiquetas, ${stats.categories} categorías, ${stats.tools} herramientas`
+          : stats.labels 
+            ? `¡Base de datos sembrada! ${stats.labels} etiquetas, ${stats.categories} categorías, ${stats.tools} herramientas`
+            : `¡Base de datos sembrada! ${stats.categories} categorías, ${stats.tools} herramientas`;
+        toast.success(message);
+        // Refresh the page to show new data
+        window.location.reload();
+      } else {
+        toast.error('Error al sembrar la base de datos');
+      }
+    } catch (error) {
+      toast.error('Error ejecutando el sembrador');
+      console.error('Seeder error:', error);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const getCurrentPage = () => {
     if (location.pathname === '/') return 'home';
-    return location.pathname.slice(1);
+    return location.pathname.slice(1).split('/')[0];
+  };
+
+  const handleProfileClick = () => {
+    if (user?.isLoggedIn) {
+      navigate('/profile');
+    } else {
+      navigate('/login');
+    }
+    setIsMenuOpen(false);
   };
 
   return (
@@ -64,6 +139,29 @@ export function Navigation() {
                 {item.label}
               </button>
             ))}
+            {user?.role === 'ADMIN' && (
+              <>
+                <button
+                  onClick={() => handleNavClick('admin')}
+                  className={`transition-colors ${
+                    getCurrentPage() === 'admin'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Administrador
+                </button>
+                <button
+                  onClick={handleRunSeeder}
+                  disabled={isSeeding}
+                  className="transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  title="Ejecutar Sembrador de Base de Datos"
+                >
+                  <Database className="w-4 h-4" />
+                  {isSeeding ? 'Sembrando...' : 'Sembrar BD'}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Search Bar & Profile */}
@@ -76,24 +174,21 @@ export function Navigation() {
               />
             </div>
             <button
-              onClick={() => handleNavClick('profile')}
+              onClick={handleProfileClick}
               className="transition-opacity hover:opacity-80"
+              title={user?.isLoggedIn ? user.name : 'Iniciar sesión'}
             >
-              <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center cursor-pointer rounded-full">
-                <User className="w-5 h-5" />
-              </div>
-            </button>
-            <button
-              onClick={() => handleNavClick('admin')}
-              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
-            >
-              Admin
-            </button>
-            <button
-              onClick={() => handleNavClick('admin-text')}
-              className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
-            >
-              Admin Text
+              {user?.isLoggedIn && user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="w-9 h-9 rounded-full object-cover border-2 border-primary/20"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center cursor-pointer rounded-full">
+                  <User className="w-5 h-5" />
+                </div>
+              )}
             </button>
           </div>
 
@@ -132,6 +227,39 @@ export function Navigation() {
                   {item.label}
                 </button>
               ))}
+              <button
+                onClick={handleProfileClick}
+                className="w-full text-left px-3 py-2 transition-colors text-muted-foreground hover:text-foreground flex items-center gap-2"
+              >
+                {user?.isLoggedIn && user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5" />
+                )}
+                {user?.isLoggedIn ? 'Perfil' : 'Iniciar sesión'}
+              </button>
+              {user?.role === 'ADMIN' && (
+                <>
+                  <button
+                    onClick={() => { handleNavClick('admin'); setIsMenuOpen(false); }}
+                    className="w-full bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm mt-2"
+                  >
+                    Panel de Administrador
+                  </button>
+                  <button
+                    onClick={handleRunSeeder}
+                    disabled={isSeeding}
+                    className="w-full bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                  >
+                    <Database className="w-4 h-4" />
+                    {isSeeding ? 'Sembrando...' : 'Sembrar Base de Datos'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

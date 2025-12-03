@@ -72,7 +72,7 @@ export function HeroSection() {
               className="pl-16 pr-32 py-6 text-lg bg-neutral-800 text-white placeholder:text-gray-300 border-gray-600 rounded-full"
             />
             <Button size="lg" className="absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">
-              Search
+              Buscar
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>

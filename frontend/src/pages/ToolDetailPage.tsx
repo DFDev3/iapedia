@@ -1,98 +1,215 @@
 import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
-
 import { Badge } from "../components/ui/badge";
 import { Progress } from "../components/ui/progress";
-import { ToolLabels, createPricingLabel, LABEL_CONFIGS } from "../components/ToolLabels";
-import { Star, ExternalLink, Users, Calendar, ArrowLeft } from "lucide-react";
+import { Star, ExternalLink, Users, Calendar, ArrowLeft, TrendingUp, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { ImageWithFallback } from "../components/ImageWithFallback";
 
-interface Comment {
-  id: string;
-  author: string;
-  avatar: string;
+interface Label {
+  id: number;
+  name: string;
+  slug: string;
+  category: string;
+  color: string;
+}
+
+interface Review {
+  id: number;
   rating: number;
-  date: string;
-  text: string;
+  content: string;
+  createdAt: string;
+  user: {
+    id: number;
+    name: string;
+    avatarUrl: string;
+  };
+}
+
+interface Tool {
+  id: number;
+  name: string;
+  description: string;
+  url: string;
+  imageUrl: string;
+  bannerUrl: string | null;
+  planType: string;
+  isTrending: boolean;
+  isNew: boolean;
+  viewCount: number;
+  createdAt: string;
+  category: {
+    id: number;
+    name: string;
+  };
+  labels: Array<{
+    label: Label;
+  }>;
+  reviews: Review[];
+  favorites: Array<{
+    userId: number;
+  }>;
 }
 
 export function ToolDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [tool, setTool] = useState<Tool | null>(null);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: "1",
-      author: "Sarah Chen",
-      avatar: "SC",
-      rating: 5,
-      date: "2 days ago",
-      text: "Absolutely incredible! This tool has revolutionized our workflow. The AI capabilities are top-notch and the interface is incredibly intuitive."
-    },
-    {
-      id: "2",
-      author: "Michael Rodriguez",
-      avatar: "MR",
-      rating: 4,
-      date: "1 week ago",
-      text: "Great tool overall. The features are robust and well-implemented. Would love to see more customization options in future updates."
-    },
-    {
-      id: "3",
-      author: "Emily Watson",
-      avatar: "EW",
-      rating: 5,
-      date: "2 weeks ago",
-      text: "This is exactly what I was looking for! The results are consistently high quality and the processing speed is impressive."
-    }
-  ]);
-
-  const defaultTool = {
-    name: "Neural Canvas",
-    description: "Advanced image generation with unprecedented quality and control",
-    category: "Image AI",
-    rating: 4.9,
-    users: "2.3M",
-    price: "Freemium",
-    labels: [
-      createPricingLabel("Freemium"),
-      LABEL_CONFIGS.category.image,
-      LABEL_CONFIGS.capability.assistant,
-      LABEL_CONFIGS.status.popular
-    ],
-    banner: "https://images.unsplash.com/photo-1737505599159-5ffc1dcbc08f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHRlY2hub2xvZ3klMjBuZXVyYWwlMjBuZXR3b3JrfGVufDF8fHx8MTc2MDAyMjM3M3ww&ixlib=rb-4.1.0&q=80&w=1080"
-  };
-
-  const currentTool = defaultTool;
-
-  const ratingDistribution = [
-    { stars: 5, percentage: 75, count: 1823 },
-    { stars: 4, percentage: 15, count: 364 },
-    { stars: 3, percentage: 6, count: 146 },
-    { stars: 2, percentage: 3, count: 73 },
-    { stars: 1, percentage: 1, count: 24 }
-  ];
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    fetchTool();
+    
+    // Track view - use a small delay to batch any duplicate calls from StrictMode
+    const timer = setTimeout(() => {
+      trackView();
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [id]);
 
-  const handleSubmitComment = () => {
-    if (newComment.trim() && userRating > 0) {
-      const comment: Comment = {
-        id: Date.now().toString(),
-        author: "You",
-        avatar: "YO",
-        rating: userRating,
-        date: "Just now",
-        text: newComment
-      };
-      setComments([comment, ...comments]);
-      setNewComment("");
-      setUserRating(0);
+  const trackView = async () => {
+    try {
+      await fetch(`http://localhost:4000/api/tools/${id}/view`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Error tracking view:', error);
     }
   };
+
+  const fetchTool = async () => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/tools/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch tool');
+      const data = await response.json();
+      setTool(data);
+    } catch (error) {
+      console.error('Error fetching tool:', error);
+      toast.error('Failed to load tool details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return '1 day ago';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
+    return `${Math.floor(diffInDays / 365)} years ago`;
+  };
+
+  const calculateRatingStats = () => {
+    if (!tool || tool.reviews.length === 0) {
+      return {
+        average: 0,
+        distribution: [
+          { stars: 5, percentage: 0, count: 0 },
+          { stars: 4, percentage: 0, count: 0 },
+          { stars: 3, percentage: 0, count: 0 },
+          { stars: 2, percentage: 0, count: 0 },
+          { stars: 1, percentage: 0, count: 0 }
+        ]
+      };
+    }
+
+    const total = tool.reviews.length;
+    const distribution = [5, 4, 3, 2, 1].map(stars => {
+      const count = tool.reviews.filter(r => r.rating === stars).length;
+      return {
+        stars,
+        percentage: Math.round((count / total) * 100),
+        count
+      };
+    });
+
+    const sum = tool.reviews.reduce((acc, r) => acc + r.rating, 0);
+    const average = (sum / total).toFixed(1);
+
+    return { average: parseFloat(average), distribution };
+  };
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || userRating === 0) return;
+
+    // Check if user is logged in
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      toast.error('Please login to submit a review');
+      navigate('/login');
+      return;
+    }
+
+    const user = JSON.parse(storedUser);
+
+    try {
+      const response = await fetch('http://localhost:4000/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          toolId: parseInt(id!),
+          rating: userRating,
+          content: newComment
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit review');
+      }
+
+      toast.success('Review submitted successfully!');
+      setNewComment("");
+      setUserRating(0);
+      
+      // Refresh tool data to show new review
+      await fetchTool();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit review');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Loading tool details...</p>
+      </div>
+    );
+  }
+
+  if (!tool) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-muted-foreground">Tool not found</p>
+        <Button onClick={() => navigate('/categories')}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Categories
+        </Button>
+      </div>
+    );
+  }
+
+  const stats = calculateRatingStats();
 
   return (
     <div className="min-h-screen bg-background pb-12">
@@ -110,15 +227,21 @@ export function ToolDetailPage() {
 
       {/* Banner */}
       <div className="relative w-full h-80 md:h-96 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
-        {currentTool.banner && (
+        {tool.bannerUrl ? (
           <img
-          
-            src={currentTool.banner}
-            alt={currentTool.name}
+            src={tool.bannerUrl}
+            alt={tool.name}
             className="w-full h-full object-cover opacity-60"
           />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ImageWithFallback
+              src={tool.imageUrl}
+              alt={tool.name}
+              className="w-32 h-32 object-contain opacity-40"
+            />
+          </div>
         )}
-        
       </div>
 
       {/* Main Content */}
@@ -129,34 +252,66 @@ export function ToolDetailPage() {
              {/* Tool Header */}
             <Card className="bg-card border-border">
               <CardContent className="p-8">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start gap-6 mb-4">
+                  <ImageWithFallback
+                    src={tool.imageUrl}
+                    alt={tool.name}
+                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                  />
                   <div className="flex-1">
-                    <h1 className="text-4xl md:text-5xl mb-4">{currentTool.name}</h1>
-                    <p className="text-xl text-muted-foreground mb-6">
-                      {currentTool.description}
+                    <div className="flex items-start gap-3 mb-2">
+                      <h1 className="text-4xl md:text-5xl flex-1">{tool.name}</h1>
+                      <div className="flex gap-2">
+                        {tool.isNew && <Sparkles className="w-6 h-6 text-yellow-500" />}
+                        {tool.isTrending && <TrendingUp className="w-6 h-6 text-orange-500" />}
+                      </div>
+                    </div>
+                    <p className="text-xl text-muted-foreground mb-4">
+                      {tool.description}
                     </p>
                   </div>
                 </div>
 
-                <ToolLabels labels={currentTool.labels} maxLabels={5} className="mb-6" />
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {tool.labels.map((tl) => (
+                    <Badge
+                      key={tl.label.id}
+                      className="text-sm"
+                      style={{
+                        backgroundColor: `${tl.label.color}20`,
+                        color: tl.label.color,
+                        borderColor: `${tl.label.color}40`,
+                      }}
+                    >
+                      {tl.label.name}
+                    </Badge>
+                  ))}
+                </div>
 
                 <div className="flex flex-wrap items-center gap-6 mb-6">
                   <div className="flex items-center space-x-2">
                     <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-xl">{currentTool.rating}</span>
-                    <span className="text-sm text-muted-foreground">(2,430 reviews)</span>
+                    <span className="text-xl">{stats.average}</span>
+                    <span className="text-sm text-muted-foreground">({tool.reviews.length} reviews)</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Users className="w-5 h-5 text-muted-foreground" />
-                    <span>{currentTool.users} users</span>
+                    <span>{tool.viewCount.toLocaleString()} views</span>
                   </div>
                   <Badge variant="secondary" className="text-sm px-3 py-1">
-                    {currentTool.category}
+                    {tool.category.name}
+                  </Badge>
+                  <Badge variant="secondary" className="text-sm px-3 py-1">
+                    {tool.planType}
                   </Badge>
                 </div>
 
-                <Button size="lg" className="w-full md:w-auto">
-                  Try {currentTool.name}
+                <Button 
+                  size="lg" 
+                  className="w-full md:w-auto bg-orange-500 hover:bg-orange-600"
+                  onClick={() => window.open(tool.url, '_blank')}
+                >
+                  Visit {tool.name}
                   <ExternalLink className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
@@ -169,7 +324,7 @@ export function ToolDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground leading-relaxed">
-                  {currentTool.name} is a cutting-edge AI-powered tool designed to revolutionize your creative workflow. 
+                  {tool.name} is a cutting-edge AI-powered tool designed to revolutionize your creative workflow. 
                   Built with state-of-the-art machine learning algorithms, it delivers exceptional results with minimal effort.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
@@ -275,44 +430,50 @@ export function ToolDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Comments Section */}
+            {/* Reviews Section */}
             <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>User Reviews ({comments.length})</CardTitle>
+                <CardTitle>User Reviews ({tool.reviews.length})</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="border-b border-border pb-6 last:border-0 last:pb-0">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 bg-primary/20 text-primary flex items-center justify-center rounded-full">
-                        {comment.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p>{comment.author}</p>
-                            <div className="flex items-center space-x-2">
-                              <div className="flex items-center">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-3 h-3 ${
-                                      i < comment.rating
-                                        ? "fill-yellow-400 text-yellow-400"
-                                        : "text-muted-foreground"
-                                    }`}
-                                  />
-                                ))}
+                {tool.reviews.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No reviews yet. Be the first to review!</p>
+                ) : (
+                  tool.reviews.map((review) => (
+                    <div key={review.id} className="border-b border-border pb-6 last:border-0 last:pb-0">
+                      <div className="flex items-start space-x-4">
+                        <img
+                          src={review.user.avatarUrl}
+                          alt={review.user.name}
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="font-medium">{review.user.name}</p>
+                              <div className="flex items-center space-x-2">
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-3 h-3 ${
+                                        i < review.rating
+                                          ? "fill-yellow-400 text-yellow-400"
+                                          : "text-muted-foreground"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-muted-foreground">{getRelativeTime(review.createdAt)}</span>
                               </div>
-                              <span className="text-xs text-muted-foreground">{comment.date}</span>
                             </div>
                           </div>
+                          <p className="text-muted-foreground">{review.content || 'No review text provided'}</p>
                         </div>
-                        <p className="text-muted-foreground">{comment.text}</p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>
@@ -327,24 +488,24 @@ export function ToolDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-center pb-4 border-b border-border">
-                    <div className="text-5xl mb-2">{currentTool.rating}</div>
+                    <div className="text-5xl mb-2">{stats.average}</div>
                     <div className="flex items-center justify-center mb-2">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
                           className={`w-4 h-4 ${
-                            i < Math.round(currentTool.rating)
+                            i < Math.round(stats.average)
                               ? "fill-yellow-400 text-yellow-400"
                               : "text-muted-foreground"
                           }`}
                         />
                       ))}
                     </div>
-                    <p className="text-sm text-muted-foreground">2,430 total reviews</p>
+                    <p className="text-sm text-muted-foreground">{tool.reviews.length} total reviews</p>
                   </div>
 
                   <div className="space-y-3">
-                    {ratingDistribution.map((item) => (
+                    {stats.distribution.map((item) => (
                       <div key={item.stars} className="flex items-center space-x-3">
                         <span className="text-sm w-6">{item.stars}</span>
                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
@@ -365,12 +526,15 @@ export function ToolDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-4">
-                    <div className="text-3xl mb-2">{currentTool.price}</div>
+                    <div className="text-3xl mb-2">{tool.planType}</div>
                     <p className="text-sm text-muted-foreground mb-4">
                       Start using this tool today
                     </p>
-                    <Button className="w-full" variant="outline">
-                      View Plans
+                    <Button 
+                      className="w-full bg-orange-500 hover:bg-orange-600" 
+                      onClick={() => window.open(tool.url, '_blank')}
+                    >
+                      Get Started
                     </Button>
                   </div>
                 </CardContent>

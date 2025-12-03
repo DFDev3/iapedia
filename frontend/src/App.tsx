@@ -7,9 +7,10 @@ import { CategoriesPage } from "./pages/CategoriesPage";
 import { FeaturedPage } from "./pages/FeaturedPage";
 import { ToolDetailPage } from "./pages/ToolDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
-// import { CategoryDetailPage } from "./pages/CategoryDetailPage";
+import { CategoryDetailPage } from "./pages/CategoryDetailPage";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
 import { AdminPage } from "./pages/AdminPage";
-import { AdminDashboard } from "./pages/AdminText";
 
 export default function App() {
   return (
@@ -20,12 +21,13 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/categories/:id" element={<CategoryDetailPage />} />
             <Route path="/featured" element={<FeaturedPage />} />
-            <Route path="/tool-detail" element={<ToolDetailPage />} />
-            {/* <Route path="/category-detail" element={<CategoryDetailPage />} /> */}
+            <Route path="/tools/:id" element={<ToolDetailPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminPage />} />
-            <Route path="/admin-text" element={<AdminDashboard />} />
           </Routes>
         </main>
         <Footer />
