@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
-import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../components/ui/alert-dialog";
 import { Star, ArrowLeft, Settings, Heart, MessageSquare, Calendar, LogOut, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { FavoritesCard } from "../components/FavoritesCard";
 
 interface UserData {
   id: number;
@@ -30,15 +30,27 @@ interface UserData {
       name: string;
       description: string;
       imageUrl: string;
+      url: string;
+      viewCount: number;
+      favoriteCount: number;
+      isTrending: boolean;
+      isNew: boolean;
       category: {
+        id: number;
         name: string;
       };
       labels: Array<{
         label: {
+          id: number;
           name: string;
           color: string;
         };
       }>;
+      reviews?: Array<{
+        rating: number;
+      }>;
+      averageRating?: number;
+      reviewCount?: number;
     };
   }>;
   reviews: Array<{
@@ -439,7 +451,7 @@ export function ProfilePage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="favorites" className="space-y-4">
+              <TabsContent value="favorites" className="space-y-6">
                 {userData.favorites.length === 0 ? (
                   <Card className="bg-card border-border">
                     <CardContent className="p-8 text-center">
@@ -448,29 +460,41 @@ export function ProfilePage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  userData.favorites.map((favorite) => (
-                    <Card key={favorite.id} className="bg-card border-border hover:bg-card/80 transition-colors cursor-pointer">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-xl">{favorite.tool.name}</h3>
-                              <Badge variant="secondary" className="text-xs">
-                                {favorite.tool.category.name}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">{favorite.tool.description}</p>
-                            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                              <span>Added {getRelativeTime(favorite.createdAt)}</span>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="sm">
-                            <Heart className="w-4 h-4 fill-primary text-primary" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {userData.favorites.map((favorite) => (
+                      <FavoritesCard 
+                        key={favorite.id}
+                        favorite={favorite}
+                        onRemove={async (favoriteId) => {
+                          try {
+                            const userId = localStorage.getItem('user');
+                            if (!userId) return;
+                            const user = JSON.parse(userId);
+                            
+                            const res = await fetch(
+                              `http://localhost:4000/api/tools/${favorite.tool.id}/favorite`,
+                              {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: user.id })
+                              }
+                            );
+                            
+                            if (res.ok) {
+                              setUserData(prev => prev ? {
+                                ...prev,
+                                favorites: prev.favorites.filter(f => f.id !== favoriteId)
+                              } : null);
+                              toast.success('Removed from favorites');
+                            }
+                          } catch (err) {
+                            console.error('Error removing favorite:', err);
+                            toast.error('Failed to remove favorite');
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
                 )}
               </TabsContent>
 

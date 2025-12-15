@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
-import { Star, Users, Zap, TrendingUp, Award, ArrowRight } from "lucide-react";
-import { ImageWithFallback } from "../components/ImageWithFallback";
+import { Award, TrendingUp, Zap } from "lucide-react";
+import { ToolCard } from "../components/ToolCard";
+import { useFavorites } from "../hooks/useFavorites";
 
 interface Label {
   id: number;
@@ -24,6 +21,7 @@ interface Tool {
   isTrending: boolean;
   isNew: boolean;
   viewCount: number;
+  favoriteCount?: number;
   category: {
     id: number;
     name: string;
@@ -40,9 +38,11 @@ interface Tool {
 }
 
 export function FeaturedPage() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [tools, setTools] = useState<Tool[]>([]);
+  
+  // Use favorites hook
+  const { isFavorited, addFavorite, removeFavorite } = useFavorites();
 
   useEffect(() => {
     fetchTools();
@@ -59,20 +59,6 @@ export function FeaturedPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculateAverageRating = (reviews: any[] | undefined) => {
-    // Add null/undefined check
-    if (!reviews || reviews.length === 0) return 0;
-
-    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
-    return sum / reviews.length;
-  };
-
-  const formatUserCount = (count: number) => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(0)}K`;
-    return count.toString();
   };
 
   // Filter tools by categories
@@ -120,86 +106,6 @@ export function FeaturedPage() {
     },
   ].filter((section) => section.tools.length > 0);
 
-  const FeaturedToolCard = ({
-    tool,
-    gradient,
-  }: {
-    tool: Tool;
-    gradient: string;
-  }) => {
-    const averageRating = calculateAverageRating(tool.reviews ?? []);
-    const userCount = formatUserCount(tool.viewCount);
-
-    return (
-      <Card
-        className="group relative overflow-hidden border-border bg-card hover:bg-card/80 transition-all duration-300 cursor-pointer"
-        onClick={() => navigate(`/tools/${tool.id}`)}
-      >
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50 group-hover:opacity-70 transition-opacity`}
-        ></div>
-
-        <CardContent className="relative z-10 p-8">
-          <div className="flex items-start justify-between mb-4">
-            <Badge variant="secondary" className="text-xs">
-              {tool.category.name}
-            </Badge>
-            <ImageWithFallback
-              src={tool.imageUrl}
-              alt={tool.name}
-              className="w-12 h-12 rounded-lg object-cover"
-            />
-          </div>
-
-          <h3 className="text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
-            {tool.name}
-          </h3>
-
-          <p className="text-muted-foreground mb-6 leading-relaxed line-clamp-2">
-            {tool.description}
-          </p>
-
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm font-medium">{averageRating > 0 ? averageRating.toFixed(1) : 'Nuevo'}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {userCount}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Tool Labels */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {tool.labels.slice(0, 4).map((tl) => (
-              <Badge
-                key={tl.label.id}
-                className="text-xs"
-                style={{
-                  backgroundColor: `${tl.label.color}20`,
-                  color: tl.label.color,
-                  borderColor: `${tl.label.color}40`,
-                }}
-              >
-                {tl.label.name}
-              </Badge>
-            ))}
-          </div>
-
-          <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white transition-all hover:shadow-[0_0_20px_rgba(249,115,22,0.5)] border-0">
-            Ver Detalles
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <section className="py-12 px-6">
       <div className="max-w-7xl mx-auto">
@@ -234,10 +140,19 @@ export function FeaturedPage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   {section.tools.map((tool) => (
-                    <FeaturedToolCard
+                    <ToolCard
                       key={tool.id}
-                      tool={tool}
-                      gradient={section.gradient}
+                      tool={{
+                        ...tool,
+                        isFavorited: isFavorited(tool.id)
+                      }}
+                      onFavoriteChange={(toolId, isFav) => {
+                        if (isFav) {
+                          addFavorite(toolId);
+                        } else {
+                          removeFavorite(toolId);
+                        }
+                      }}
                     />
                   ))}
                 </div>

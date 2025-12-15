@@ -1,12 +1,11 @@
-import { Card, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { ImageAIIcon, TextAIIcon, SoundAIIcon, ProductivityIcon } from "../components/CategoryIcons";
-import { ArrowLeft, Grid, List, TrendingUp, Sparkles, ArrowRight, Search, Star, Users } from "lucide-react";
+import { ArrowLeft, Grid, List, TrendingUp, Sparkles, Search } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ImageWithFallback } from "../components/ImageWithFallback";
+import { ToolCard } from "../components/ToolCard";
+import { useFavorites } from "../hooks/useFavorites";
 
 interface Label {
   id: number;
@@ -38,6 +37,11 @@ interface Tool {
   isTrending: boolean;
   isNew: boolean;
   viewCount: number;
+  favoriteCount?: number;
+  category?: {
+    id: number;
+    name: string;
+  };
   labels: { label: Label }[];
   reviews: Review[];
   favorites: Array<{
@@ -101,6 +105,9 @@ export function CategoryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Use favorites hook
+  const { isFavorited, addFavorite, removeFavorite } = useFavorites();
 
   useEffect(() => {
     fetchCategory();
@@ -297,190 +304,22 @@ export function CategoryDetailPage() {
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             : "space-y-4"
           }>
-            {filteredTools.map((tool) => {
-              // Grid View
-              if (viewMode === "grid") {
-                return (
-                  <Card
-                    key={tool.id}
-                    className="group relative overflow-hidden border-border bg-card hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${gradient}`}></div>
-                    <div className={`absolute inset-0 ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-
-                    <CardContent className="p-6 relative flex flex-col h-full">
-                      {/* Tool Header */}
-                      <div className="flex items-start gap-4 mb-4">
-                        <ImageWithFallback
-                          src={tool.imageUrl}
-                          alt={tool.name}
-                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-lg font-bold group-hover:text-primary transition-colors line-clamp-1">
-                              {tool.name}
-                            </h3>
-                            <div className="flex gap-1 flex-shrink-0">
-                              {tool.isNew && <Sparkles className="w-4 h-4 text-yellow-500" />}
-                              {tool.isTrending && <TrendingUp className="w-4 h-4 text-orange-500" />}
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {tool.planType}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
-                        {tool.description}
-                      </p>
-
-                      {/* Rating and Users */}
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-medium">
-                            {tool.reviews && tool.reviews.length > 0
-                              ? (tool.reviews.reduce((acc, r) => acc + r.rating, 0) / tool.reviews.length).toFixed(1)
-                              : 'Nuevo'
-                            }
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            {tool.viewCount.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Labels */}
-                      {tool.labels.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {tool.labels.slice(0, 3).map((tl) => (
-                            <Badge
-                              key={tl.label.id}
-                              className="text-xs"
-                              style={{
-                                backgroundColor: `${tl.label.color}20`,
-                                color: tl.label.color,
-                                borderColor: `${tl.label.color}40`,
-                              }}
-                            >
-                              {tl.label.name}
-                            </Badge>
-                          ))}
-                          {tool.labels.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{tool.labels.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-
-                      {/* View Details Button */}
-                      <Button
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white transition-all mt-auto hover:shadow-[0_0_20px_rgba(249,115,22,0.5)] border-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/tools/${tool.id}`);
-                        }}
-                      >
-                        <span>View Details</span>
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              }
-
-              // List View
-              return (
-                <Card
-                  key={tool.id}
-                  className="group relative overflow-hidden border-border bg-card hover:shadow-lg transition-all duration-300 cursor-pointer"
-                >
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${gradient}`}></div>
-                  <div className={`absolute inset-0 ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-
-                  <CardContent className="p-6 relative">
-                    <div className="flex items-center gap-6">
-                      {/* Tool Logo */}
-                      <ImageWithFallback
-                        src={tool.imageUrl}
-                        alt={tool.name}
-                        className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                      />
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
-                              {tool.name}
-                            </h3>
-                            <div className="flex gap-2">
-                              {tool.isNew && (
-                                <Badge className="text-xs bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                                  <Sparkles className="w-3 h-3 mr-1" />
-                                  New
-                                </Badge>
-                              )}
-                              {tool.isTrending && (
-                                <Badge className="text-xs bg-orange-500/10 text-orange-500 border-orange-500/20">
-                                  <TrendingUp className="w-3 h-3 mr-1" />
-                                  Hot
-                                </Badge>
-                              )}
-                              <Badge variant="secondary" className="text-xs">
-                                {tool.planType}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {tool.description}
-                        </p>
-
-                        {/* Labels in List */}
-                        {tool.labels.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {tool.labels.map((tl) => (
-                              <Badge
-                                key={tl.label.id}
-                                className="text-xs"
-                                style={{
-                                  backgroundColor: `${tl.label.color}20`,
-                                  color: tl.label.color,
-                                  borderColor: `${tl.label.color}40`,
-                                }}
-                              >
-                                {tl.label.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* View Details Button */}
-                      <Button
-                        className="bg-orange-500 hover:bg-orange-600 text-white transition-all hover:shadow-[0_0_20px_rgba(249,115,22,0.5)] border-0 flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/tools/${tool.id}`);
-                        }}
-                      >
-                        <span>View Details</span>
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {filteredTools.map((tool) => (
+              <ToolCard
+                key={tool.id}
+                tool={{
+                  ...tool,
+                  isFavorited: isFavorited(tool.id)
+                }}
+                onFavoriteChange={(toolId, isFav) => {
+                  if (isFav) {
+                    addFavorite(toolId);
+                  } else {
+                    removeFavorite(toolId);
+                  }
+                }}
+              />
+            ))}
           </div>
         )}
       </div>

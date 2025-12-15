@@ -1,6 +1,6 @@
 import { HeroSection } from "../components/HeroSection";
 import { CategoriesSection } from "../components/CategoriesSection";
-import { FeaturedSection } from "../components/FeaturedSection";
+import { PopularToolsSection } from "../components/PopularToolsSection";
 
 export function HomePage() {
 
@@ -8,7 +8,7 @@ export function HomePage() {
     <>
       <HeroSection />
       <CategoriesSection />
-      <FeaturedSection />
+      <PopularToolsSection />
     </>
   );
 }

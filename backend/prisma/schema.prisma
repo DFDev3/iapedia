@@ -74,6 +74,7 @@ model Tool {
   isTrending  Boolean    @default(false)
   isNew       Boolean    @default(false)
   viewCount   Int        @default(0)
+  favoriteCount Int      @default(0)
   createdAt   DateTime   @default(now())
 
   // opposite relations
@@ -103,6 +104,8 @@ model Favorite {
 
   user User @relation(fields: [userId], references: [id])
   tool Tool @relation("ToolFavorites", fields: [toolId], references: [id])
+  
+  @@unique([userId, toolId])
 }
 
 model User {

@@ -1,8 +1,9 @@
-import { Search, Menu, X, User, Database } from "lucide-react";
+import { Search, Menu, X, User, Database, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { toast } from "sonner";
 import '../styles/global.css';
 
@@ -11,49 +12,20 @@ interface NavItem {
   label: string;
 }
 
-interface UserData {
-  id: number;
-  email: string;
-  name: string;
-  role: string;
-  avatarUrl?: string;
-  isLoggedIn: boolean;
-}
-
 export function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavItem[]>([]);
   const [isSeeding, setIsSeeding] = useState(false);
-  const [user, setUser] = useState<UserData | null>(null);
 
   useEffect(() => {
     fetch('http://localhost:4000/api/navigation')
       .then(response => response.json())
       .then(data => setNavItems(data))
       .catch(error => console.error('Error fetching navigation:', error));
-
-    // Check if user is logged in
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      console.log('Navigation: User data loaded:', parsedUser);
-      setUser(parsedUser);
-    }
   }, []);
-
-  // Re-check user data when location changes (after login/logout)
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      console.log('Navigation: User updated on location change:', parsedUser);
-      setUser(parsedUser);
-    } else {
-      setUser(null);
-    }
-  }, [location]);
 
   const handleNavClick = (id: string) => {
     const path = id === 'home' ? '/' : `/${id}`;
@@ -101,11 +73,18 @@ export function Navigation() {
   };
 
   const handleProfileClick = () => {
-    if (user?.isLoggedIn) {
+    if (isAuthenticated) {
       navigate('/profile');
     } else {
-      navigate('/login');
+      navigate('/auth');
     }
+    setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
+    navigate('/');
     setIsMenuOpen(false);
   };
 
@@ -176,9 +155,9 @@ export function Navigation() {
             <button
               onClick={handleProfileClick}
               className="transition-opacity hover:opacity-80"
-              title={user?.isLoggedIn ? user.name : 'Iniciar sesión'}
+              title={isAuthenticated ? user?.name : 'Iniciar sesión'}
             >
-              {user?.isLoggedIn && user.avatarUrl ? (
+              {isAuthenticated && user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
                   alt={user.name}
@@ -231,7 +210,7 @@ export function Navigation() {
                 onClick={handleProfileClick}
                 className="w-full text-left px-3 py-2 transition-colors text-muted-foreground hover:text-foreground flex items-center gap-2"
               >
-                {user?.isLoggedIn && user.avatarUrl ? (
+                {isAuthenticated && user?.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
                     alt={user.name}
@@ -240,8 +219,17 @@ export function Navigation() {
                 ) : (
                   <User className="w-5 h-5" />
                 )}
-                {user?.isLoggedIn ? 'Perfil' : 'Iniciar sesión'}
+                {isAuthenticated ? 'Perfil' : 'Iniciar sesión'}
               </button>
+              {isAuthenticated && (
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 transition-colors text-muted-foreground hover:text-foreground flex items-center gap-2"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Cerrar sesión
+                </button>
+              )}
               {user?.role === 'ADMIN' && (
                 <>
                   <button
