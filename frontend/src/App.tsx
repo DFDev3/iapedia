@@ -10,6 +10,7 @@ import { ToolDetailPage } from "./pages/ToolDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { CategoryDetailPage } from "./pages/CategoryDetailPage";
 import AuthPage from "./pages/AuthPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import { AdminPage } from "./pages/AdminPage";
 import { SearchResultsPage } from "./pages/SearchResultsPage";
 
@@ -28,6 +29,8 @@ export default function App() {
               <Route path="/tools/:id" element={<ToolDetailPage />} />
               <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ForgotPasswordPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/admin" element={<AdminPage />} />
             </Routes>

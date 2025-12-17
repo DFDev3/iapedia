@@ -8,13 +8,13 @@ router.post('/run', async (req, res) => {
   try {
     console.log('🌱 Starting seed with labels via API...');
 
-    // Clear existing data
-    await prisma.toolLabel.deleteMany();
-    await prisma.label.deleteMany();
-    await prisma.tool.deleteMany();
-    await prisma.category.deleteMany();
+    // Clear existing data in correct order (respecting foreign keys)
     await prisma.review.deleteMany();
     await prisma.favorite.deleteMany();
+    await prisma.toolLabel.deleteMany();
+    await prisma.tool.deleteMany();
+    await prisma.label.deleteMany();
+    await prisma.category.deleteMany();
     await prisma.user.deleteMany();
 
     // Reset auto-increment sequences in PostgreSQL
@@ -33,9 +33,9 @@ router.post('/run', async (req, res) => {
     const users = await Promise.all([
       prisma.user.create({
         data: {
-          email: 'admin@iapedia.com',
+          email: 'ddiaz216@unab.edu.co',
           name: 'Admin User',
-          password: 'admin123', // In production, this should be hashed
+          password: 'Admin123', // In production, this should be hashed
           role: UserRole.ADMIN,
           avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin',
           bio: 'System administrator with full access to all features.',

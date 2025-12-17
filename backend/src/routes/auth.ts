@@ -6,6 +6,8 @@ import type { TokenPayload } from '../utils/jwt.js';
 import { hashPassword, comparePassword, validatePasswordStrength } from '../utils/password.js';
 import { authMiddleware } from '../middleware/auth.js';
 import type { AuthRequest } from '../middleware/auth.js';
+import { generateResetToken, getResetTokenExpiry, isTokenExpired } from '../utils/resetToken.js';
+import { sendPasswordResetEmail } from '../services/email.js';
 
 const router: Router = express.Router();
 const prisma = new PrismaClient();
@@ -227,6 +229,153 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     res.status(500).json({
       error: 'Failed to get user info',
       message: 'An error occurred'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/forgot-password
+ * Request password reset email
+ */
+router.post('/forgot-password', async (req: AuthRequest, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({
+        error: 'Validación fallida',
+        message: 'El correo electrónico es requerido'
+      });
+      return;
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      res.json({
+        message: 'Si existe una cuenta con este correo, se ha enviado un enlace para restablecer la contraseña'
+      });
+      return;
+    }
+
+    // Generate reset token
+    const resetToken = generateResetToken();
+    const resetTokenExpiry = getResetTokenExpiry();
+
+    // Save token to database
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken,
+        resetTokenExpiry
+      }
+    });
+
+    // Send reset email
+    try {
+      await sendPasswordResetEmail(user.email, user.name, resetToken);
+    } catch (emailError) {
+      console.error('Failed to send reset email:', emailError);
+      // Clear the token if email fails
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetToken: null,
+          resetTokenExpiry: null
+        }
+      });
+      res.status(500).json({
+        error: 'Servicio de correo no disponible',
+        message: 'Error al enviar el correo de restablecimiento. Por favor intenta más tarde.'
+      });
+      return;
+    }
+
+    res.json({
+      message: 'Si existe una cuenta con este correo, se ha enviado un enlace para restablecer la contraseña'
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      error: 'Restablecimiento de contraseña fallido',
+      message: 'Ocurrió un error'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password using token
+ */
+router.post('/reset-password', async (req: AuthRequest, res: Response) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      res.status(400).json({
+        error: 'Validación fallida',
+        message: 'El token y la nueva contraseña son requeridos'
+      });
+      return;
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      res.status(400).json({
+        error: 'Contraseña débil',
+        message: passwordValidation.message
+      });
+      return;
+    }
+
+    // Find user by reset token
+    const user = await prisma.user.findFirst({
+      where: { resetToken: token }
+    });
+
+    if (!user) {
+      res.status(400).json({
+        error: 'Token inválido',
+        message: 'El token de restablecimiento de contraseña es inválido'
+      });
+      return;
+    }
+
+    // Check if token is expired
+    if (isTokenExpired(user.resetTokenExpiry)) {
+      res.status(400).json({
+        error: 'Token expirado',
+        message: 'El token de restablecimiento ha expirado. Por favor solicita uno nuevo.'
+      });
+      return;
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(password);
+
+    // Update password and clear reset token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null
+      }
+    });
+
+    res.json({
+      message: 'Contraseña restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      error: 'Restablecimiento de contraseña fallido',
+      message: 'Ocurrió un error'
     });
   }
 });

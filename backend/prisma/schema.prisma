@@ -118,6 +118,10 @@ model User {
   avatarUrl    String
   bio          String
   helpfulVotes Int        @default(0)
+  
+  // Password reset fields
+  resetToken         String?
+  resetTokenExpiry   DateTime?
 
   reviews      Review[]
   favorites    Favorite[]

@@ -1,4 +1,4 @@
-import { Search, Menu, X, User, Database, LogOut } from "lucide-react";
+import { Search, Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState, useEffect } from "react";
@@ -18,7 +18,6 @@ export function Navigation() {
   const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [navItems, setNavItems] = useState<NavItem[]>([]);
-  const [isSeeding, setIsSeeding] = useState(false);
 
   useEffect(() => {
     fetch('http://localhost:4000/api/navigation')
@@ -31,40 +30,6 @@ export function Navigation() {
     const path = id === 'home' ? '/' : `/${id}`;
     navigate(path);
     setIsMenuOpen(false);
-  };
-
-  const handleRunSeeder = async () => {
-    if (!confirm('Esto eliminará todos los datos existentes y volverá a sembrar la base de datos. ¿Estás seguro?')) {
-      return;
-    }
-
-    setIsSeeding(true);
-    try {
-      const response = await fetch('http://localhost:4000/api/seed/run', {
-        method: 'POST',
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        const stats = data.stats;
-        const message = stats.users 
-          ? `¡Base de datos sembrada! ${stats.users} usuarios, ${stats.labels} etiquetas, ${stats.categories} categorías, ${stats.tools} herramientas`
-          : stats.labels 
-            ? `¡Base de datos sembrada! ${stats.labels} etiquetas, ${stats.categories} categorías, ${stats.tools} herramientas`
-            : `¡Base de datos sembrada! ${stats.categories} categorías, ${stats.tools} herramientas`;
-        toast.success(message);
-        // Refresh the page to show new data
-        window.location.reload();
-      } else {
-        toast.error('Error al sembrar la base de datos');
-      }
-    } catch (error) {
-      toast.error('Error ejecutando el sembrador');
-      console.error('Seeder error:', error);
-    } finally {
-      setIsSeeding(false);
-    }
   };
 
   const getCurrentPage = () => {
@@ -119,27 +84,16 @@ export function Navigation() {
               </button>
             ))}
             {user?.role === 'ADMIN' && (
-              <>
-                <button
-                  onClick={() => handleNavClick('admin')}
-                  className={`transition-colors ${
-                    getCurrentPage() === 'admin'
-                      ? 'text-primary'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Administrador
-                </button>
-                <button
-                  onClick={handleRunSeeder}
-                  disabled={isSeeding}
-                  className="transition-colors text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                  title="Ejecutar Sembrador de Base de Datos"
-                >
-                  <Database className="w-4 h-4" />
-                  {isSeeding ? 'Sembrando...' : 'Sembrar BD'}
-                </button>
-              </>
+              <button
+                onClick={() => handleNavClick('admin')}
+                className={`transition-colors ${
+                  getCurrentPage() === 'admin'
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Administrador
+              </button>
             )}
           </div>
 
@@ -237,14 +191,6 @@ export function Navigation() {
                     className="w-full bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 text-sm mt-2"
                   >
                     Panel de Administrador
-                  </button>
-                  <button
-                    onClick={handleRunSeeder}
-                    disabled={isSeeding}
-                    className="w-full bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
-                  >
-                    <Database className="w-4 h-4" />
-                    {isSeeding ? 'Sembrando...' : 'Sembrar Base de Datos'}
                   </button>
                 </>
               )}

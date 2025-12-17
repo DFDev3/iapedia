@@ -34,7 +34,32 @@ const envSchema = z.object({
 
   // CORS (optional)
   CORS_ORIGIN: z.string()
-    .default('http://localhost:5173,http://localhost:3000')
+    .default('http://localhost:5173,http://localhost:3000'),
+
+  // Email (SMTP)
+  SMTP_HOST: z.string()
+    .default('smtp.gmail.com'),
+  
+  SMTP_PORT: z.string()
+    .default('587')
+    .transform(Number)
+    .pipe(z.number().int().positive()),
+  
+  SMTP_USER: z.string()
+    .optional(),
+  
+  SMTP_PASS: z.string()
+    .optional(),
+  
+  SMTP_FROM_NAME: z.string()
+    .default('IAPedia'),
+  
+  SMTP_FROM_EMAIL: z.string()
+    .optional(),
+  
+  FRONTEND_URL: z.string()
+    .url('FRONTEND_URL must be a valid URL')
+    .default('http://localhost:5173')
 });
 
 /**
@@ -56,4 +81,5 @@ try {
   process.exit(1);
 }
 
+export { env };
 export default env;
