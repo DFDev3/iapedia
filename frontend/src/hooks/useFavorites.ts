@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/api';
 
 export function useFavorites() {
   const { isAuthenticated, user } = useAuth();

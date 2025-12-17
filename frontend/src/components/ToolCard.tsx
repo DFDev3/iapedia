@@ -3,8 +3,8 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Star, Eye, Heart } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/api';
 import { toast } from 'sonner';
 
 interface ToolLabel {

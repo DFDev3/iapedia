@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { api } from '../lib/api';
 
 interface User {
   id: number;
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check if user is already logged in
     if (api.isAuthenticated()) {
       api.getCurrentUser()
-        .then((userData) => setUser(userData as User))
+        .then((userData: any) => setUser(userData as User))
         .catch(() => {
           // Token expired or invalid
           api.logout();
