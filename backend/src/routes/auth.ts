@@ -53,14 +53,14 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create user with default placeholder avatar
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role: 'USER',
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+        avatarUrl: '/avatars/default-avatar.png',
         bio: ''
       }
     });

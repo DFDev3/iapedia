@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
@@ -57,6 +58,7 @@ interface Tool {
 export function ToolDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [tool, setTool] = useState<Tool | null>(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
@@ -149,14 +151,11 @@ export function ToolDetailPage() {
     if (!newComment.trim() || userRating === 0) return;
 
     // Check if user is logged in
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
+    if (!isAuthenticated || !user) {
       toast.error('Please login to submit a review');
-      navigate('/login');
+      navigate('/auth');
       return;
     }
-
-    const user = JSON.parse(storedUser);
 
     try {
       const response = await fetch('http://localhost:4000/api/reviews', {

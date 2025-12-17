@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -67,6 +68,7 @@ interface UserData {
 
 export function ProfilePage() {
   const navigate = useNavigate();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -82,34 +84,16 @@ export function ProfilePage() {
   });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    console.log('localStorage user:', storedUser);
+    if (authLoading) return;
     
-    if (!storedUser) {
+    if (!isAuthenticated || !user) {
       toast.error("Please login to view your profile");
-      navigate("/login");
+      navigate("/auth");
       return;
     }
-
-    try {
-      const user = JSON.parse(storedUser);
-      console.log('Parsed user:', user);
-      
-      if (!user.id) {
-        toast.error("Invalid user data. Please login again.");
-        localStorage.removeItem("user");
-        navigate("/login");
-        return;
-      }
-      
-      fetchUserData(user.id);
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      toast.error("Invalid user data. Please login again.");
-      localStorage.removeItem("user");
-      navigate("/login");
-    }
-  }, [navigate]);
+    
+    fetchUserData(user.id);
+  }, [isAuthenticated, user, authLoading, navigate]);
 
   const fetchUserData = async (userId: number) => {
     try {
@@ -141,9 +125,9 @@ export function ProfilePage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    logout();
     toast.success("Logged out successfully");
-    navigate("/login");
+    navigate("/");
   };
 
   const handleSaveProfile = async () => {
