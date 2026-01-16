@@ -20,7 +20,7 @@ const envSchema = z.object({
     .describe('Secret key for JWT signing'),
   
   JWT_EXPIRY: z.string()
-    .default('7d')
+    .default('30d')
     .describe('JWT token expiration time'),
 
   // Server

@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient, PlanType, LabelCategory, UserRole } from '../generated/prisma/client.js';
+import { getToolsData } from './seed-tools-data.js';
+import { hashPassword } from '../utils/password.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -30,12 +32,18 @@ router.post('/run', async (req, res) => {
 
     // Seed Users
     console.log('Creating users...');
+    
+    // Hash all passwords
+    const adminPass = await hashPassword('Admin123');
+    const userPass = await hashPassword('password123');
+    const demoPass = await hashPassword('demo123');
+    
     const users = await Promise.all([
       prisma.user.create({
         data: {
           email: 'ddiaz216@unab.edu.co',
           name: 'Admin User',
-          password: 'Admin123', // In production, this should be hashed
+          password: adminPass,
           role: UserRole.ADMIN,
           avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin',
           bio: 'System administrator with full access to all features.',
@@ -45,7 +53,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'john.doe@example.com',
           name: 'John Doe',
-          password: 'password123', // In production, this should be hashed
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
           bio: 'AI enthusiast and tech blogger. Love exploring new tools and sharing insights.',
         },
@@ -54,7 +62,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'jane.smith@example.com',
           name: 'Jane Smith',
-          password: 'password123',
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
           bio: 'Product designer passionate about AI-powered design tools. Always testing the latest apps.',
         },
@@ -63,7 +71,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'alex.johnson@example.com',
           name: 'Alex Johnson',
-          password: 'password123',
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
           bio: 'Full-stack developer and AI researcher. Building the future with machine learning.',
         },
@@ -72,7 +80,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'demo@iapedia.com',
           name: 'Demo User',
-          password: 'demo123',
+          password: demoPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Demo',
           bio: 'Demo account for testing purposes. Feel free to explore!',
         },
@@ -81,7 +89,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'maria.garcia@example.com',
           name: 'Maria Garcia',
-          password: 'password123',
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria',
           bio: 'Content creator and digital marketer. Obsessed with AI writing tools.',
         },
@@ -90,7 +98,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'david.chen@example.com',
           name: 'David Chen',
-          password: 'password123',
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David',
           bio: 'Data scientist exploring AI analytics platforms. Always on the hunt for better tools.',
         },
@@ -99,7 +107,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'sarah.wilson@example.com',
           name: 'Sarah Wilson',
-          password: 'password123',
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
           bio: 'Video editor and animator. Testing every AI video tool I can find.',
         },
@@ -108,7 +116,7 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'michael.brown@example.com',
           name: 'Michael Brown',
-          password: 'password123',
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
           bio: 'Entrepreneur and productivity enthusiast. Automating everything with AI.',
         },
@@ -117,13 +125,28 @@ router.post('/run', async (req, res) => {
         data: {
           email: 'emily.davis@example.com',
           name: 'Emily Davis',
-          password: 'password123',
+          password: userPass,
           avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily',
           bio: 'Graphic designer and digital artist. AI art tools are my playground.',
         },
       }),
     ]);
     console.log(`✅ Created ${users.length} users`);
+
+    // Always create a default admin user for access to the admin panel
+    const defaultAdminEmail = 'admin@iapedia.com';
+    const defaultAdminPass = await hashPassword('admin123');
+    const adminUser = await prisma.user.create({
+      data: {
+        email: defaultAdminEmail,
+        name: 'Default Admin',
+        password: defaultAdminPass,
+        role: UserRole.ADMIN,
+        avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin',
+        bio: 'Default admin account for system access.'
+      }
+    });
+    console.log(`✅ Default admin created: ${defaultAdminEmail} / admin123`);
 
     // Seed Labels
     console.log('Creating labels...');
@@ -333,6 +356,8 @@ router.post('/run', async (req, res) => {
       return labels.filter(label => slugs.includes(label.slug)).map(l => l.id);
     };
 
+    console.log(`✅ Created ${labels.length} labels`);
+
     // Seed Categories
     const categories = await Promise.all([
       prisma.category.create({
@@ -403,271 +428,8 @@ router.post('/run', async (req, res) => {
 
     console.log(`✅ Created ${categories.length} categories`);
 
-    // Seed Tools with Labels
-    const toolsData = [
-      // Writing & Content
-      {
-        tool: {
-          name: 'ChatGPT',
-          description: 'Advanced AI chatbot for conversations, writing, and problem-solving',
-          url: 'https://chat.openai.com',
-          imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg',
-          categoryId: categories[0].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'ai-assistant', 'popular', 'text-generation', 'gpt-powered'],
-      },
-      {
-        tool: {
-          name: 'Jasper AI',
-          description: 'AI copywriting assistant for marketing content and blog posts',
-          url: 'https://jasper.ai',
-          imageUrl: 'https://www.jasper.ai/favicon.ico',
-          categoryId: categories[0].id,
-          planType: PlanType.PAID,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['paid', 'ai-assistant', 'text-generation', 'no-code'],
-      },
-      {
-        tool: {
-          name: 'Copy.ai',
-          description: 'Generate marketing copy and content in seconds',
-          url: 'https://copy.ai',
-          imageUrl: 'https://www.copy.ai/favicon.ico',
-          categoryId: categories[0].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: false,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'ai-assistant', 'text-generation'],
-      },
-
-      // Image Generation
-      {
-        tool: {
-          name: 'Midjourney',
-          description: 'Create stunning AI-generated artwork and images',
-          url: 'https://midjourney.com',
-          imageUrl: 'https://www.midjourney.com/favicon.ico',
-          categoryId: categories[1].id,
-          planType: PlanType.PAID,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['paid', 'image-generation', 'popular', 'community-favorite'],
-      },
-      {
-        tool: {
-          name: 'DALL-E 3',
-          description: 'OpenAI\'s powerful image generation model',
-          url: 'https://openai.com/dall-e-3',
-          imageUrl: 'https://openai.com/favicon.ico',
-          categoryId: categories[1].id,
-          planType: PlanType.PAID,
-          isTrending: true,
-          isNew: true,
-        },
-        labelSlugs: ['paid', 'image-generation', 'featured', 'gpt-powered'],
-      },
-      {
-        tool: {
-          name: 'Stable Diffusion',
-          description: 'Open-source AI image generation model',
-          url: 'https://stability.ai',
-          imageUrl: 'https://stability.ai/favicon.ico',
-          categoryId: categories[1].id,
-          planType: PlanType.FREE,
-          isTrending: false,
-          isNew: false,
-        },
-        labelSlugs: ['free', 'image-generation', 'api-available'],
-      },
-
-      // Video & Animation
-      {
-        tool: {
-          name: 'Runway ML',
-          description: 'AI-powered video editing and generation platform',
-          url: 'https://runwayml.com',
-          imageUrl: 'https://runwayml.com/favicon.ico',
-          categoryId: categories[2].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'video-editing', 'trending', 'ai-assistant'],
-      },
-      {
-        tool: {
-          name: 'Synthesia',
-          description: 'Create AI videos with digital avatars',
-          url: 'https://synthesia.io',
-          imageUrl: 'https://www.synthesia.io/favicon.ico',
-          categoryId: categories[2].id,
-          planType: PlanType.PAID,
-          isTrending: false,
-          isNew: false,
-        },
-        labelSlugs: ['paid', 'video-editing', 'no-code'],
-      },
-
-      // Code & Development
-      {
-        tool: {
-          name: 'GitHub Copilot',
-          description: 'AI pair programmer that helps you write code faster',
-          url: 'https://github.com/features/copilot',
-          imageUrl: 'https://github.githubassets.com/favicons/favicon.svg',
-          categoryId: categories[3].id,
-          planType: PlanType.PAID,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['paid', 'code-assistant', 'popular', 'ai-assistant', 'api-available'],
-      },
-      {
-        tool: {
-          name: 'Cursor',
-          description: 'AI-first code editor built for productivity',
-          url: 'https://cursor.sh',
-          imageUrl: 'https://cursor.sh/favicon.ico',
-          categoryId: categories[3].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: true,
-          isNew: true,
-        },
-        labelSlugs: ['freemium', 'code-assistant', 'trending', 'gpt-powered'],
-      },
-      {
-        tool: {
-          name: 'Tabnine',
-          description: 'AI code completion for all major IDEs',
-          url: 'https://tabnine.com',
-          imageUrl: 'https://www.tabnine.com/favicon.ico',
-          categoryId: categories[3].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: false,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'code-assistant', 'ai-assistant'],
-      },
-
-      // Audio & Music
-      {
-        tool: {
-          name: 'ElevenLabs',
-          description: 'AI voice generation and text-to-speech',
-          url: 'https://elevenlabs.io',
-          imageUrl: 'https://elevenlabs.io/favicon.ico',
-          categoryId: categories[4].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'audio-processing', 'popular', 'api-available'],
-      },
-      {
-        tool: {
-          name: 'Mubert',
-          description: 'AI-generated royalty-free music',
-          url: 'https://mubert.com',
-          imageUrl: 'https://mubert.com/favicon.ico',
-          categoryId: categories[4].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: false,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'audio-processing', 'automation'],
-      },
-
-      // Business & Productivity
-      {
-        tool: {
-          name: 'Notion AI',
-          description: 'AI-powered writing assistant integrated with Notion',
-          url: 'https://notion.so/product/ai',
-          imageUrl: 'https://www.notion.so/images/favicon.ico',
-          categoryId: categories[5].id,
-          planType: PlanType.PAID,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['paid', 'productivity', 'ai-assistant', 'popular'],
-      },
-      {
-        tool: {
-          name: 'Zapier AI',
-          description: 'Automate workflows with AI-powered automation',
-          url: 'https://zapier.com',
-          imageUrl: 'https://zapier.com/favicon.ico',
-          categoryId: categories[5].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: false,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'automation', 'productivity', 'api-available', 'no-code'],
-      },
-
-      // Design & Art
-      {
-        tool: {
-          name: 'Canva AI',
-          description: 'Design tools powered by AI for everyone',
-          url: 'https://canva.com',
-          imageUrl: 'https://www.canva.com/favicon.ico',
-          categoryId: categories[6].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: true,
-          isNew: false,
-        },
-        labelSlugs: ['freemium', 'design-tool', 'no-code', 'community-favorite'],
-      },
-      {
-        tool: {
-          name: 'Figma AI',
-          description: 'AI features in collaborative design tool',
-          url: 'https://figma.com',
-          imageUrl: 'https://www.figma.com/favicon.ico',
-          categoryId: categories[6].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: false,
-          isNew: true,
-        },
-        labelSlugs: ['freemium', 'design-tool', 'featured'],
-      },
-
-      // Data & Analytics
-      {
-        tool: {
-          name: 'Julius AI',
-          description: 'AI data analyst for analyzing and visualizing data',
-          url: 'https://julius.ai',
-          imageUrl: 'https://julius.ai/favicon.ico',
-          categoryId: categories[7].id,
-          planType: PlanType.FREEMIUM,
-          isTrending: true,
-          isNew: true,
-        },
-        labelSlugs: ['freemium', 'data-analysis', 'trending', 'ai-assistant'],
-      },
-      {
-        tool: {
-          name: 'DataRobot',
-          description: 'Enterprise AI platform for automated machine learning',
-          url: 'https://datarobot.com',
-          imageUrl: 'https://www.datarobot.com/favicon.ico',
-          categoryId: categories[7].id,
-          planType: PlanType.PAID,
-          isTrending: false,
-          isNew: false,
-        },
-        labelSlugs: ['paid', 'data-analysis', 'automation', 'api-available'],
-      },
-    ];
+    // Seed Tools with Labels - Get all 107 tools from external data file
+    const toolsData = getToolsData(categories);
 
     console.log('Creating tools with labels...');
     const createdTools = [];
@@ -675,11 +437,28 @@ router.post('/run', async (req, res) => {
       // Add random initial view count between 200-300
       const viewCount = Math.floor(Math.random() * (300 - 200 + 1)) + 200;
       
-      const createdTool = await prisma.tool.create({ 
-        data: {
-          ...tool,
-          viewCount
-        }
+      // Ensure imageUrl is always set and valid
+      let imageUrl = tool.imageUrl;
+      if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+        imageUrl = 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/artificialintelligence.svg';
+      }
+      // Only set bannerUrl if it exists in the tool object
+      const data: any = {
+        ...tool,
+        imageUrl,
+        viewCount,
+      };
+      if ('bannerUrl' in tool && tool.bannerUrl && typeof tool.bannerUrl === 'string' && tool.bannerUrl.startsWith('http')) {
+        data.bannerUrl = tool.bannerUrl;
+      } else {
+        data.bannerUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+      }
+      // Ensure categoryId is a number
+      if (typeof data.categoryId !== 'number') {
+        data.categoryId = Number(data.categoryId);
+      }
+      const createdTool = await prisma.tool.create({
+        data
       });
       
       createdTools.push(createdTool);

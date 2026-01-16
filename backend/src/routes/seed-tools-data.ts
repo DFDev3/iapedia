@@ -1,1226 +1,1411 @@
-import { PrismaClient, PlanType } from '../src/generated/prisma/client.js';
-import { hashPassword } from '../src/utils/password.js';
-import dotenv from 'dotenv';
+// Complete AI tools data for seeding - 107 tools
+// This file is imported by the seed route
 
-// Load environment variables
-dotenv.config();
-
-const prisma = new PrismaClient();
-
-async function main() {
-  console.log('🌱 Starting seed...');
-
-  // Clear existing data in the correct order (respecting foreign key constraints)
-  await prisma.toolLabel.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.favorite.deleteMany();
-  await prisma.tool.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.user.deleteMany();
-
-  // Seed Test Users
-  console.log('Creating test users...');
-  const adminPassword = await hashPassword('admin123');
-  const userPassword = await hashPassword('user123');
-
-  const adminUser = await prisma.user.create({
-    data: {
-      name: 'Admin User',
-      email: 'admin@iapedia.com',
-      password: adminPassword,
-      role: 'ADMIN',
-      avatarUrl: '/avatars/default-avatar.png',
-      bio: 'Administrator account for testing'
-    }
-  });
-
-  const testUser = await prisma.user.create({
-    data: {
-      name: 'Test User',
-      email: 'user@test.com',
-      password: userPassword,
-      role: 'USER',
-      avatarUrl: '/avatars/default-avatar.png',
-      bio: 'Regular user account for testing'
-    }
-  });
-
-  console.log(`✅ Created ${2} test users`);
-  console.log('   📧 Admin: admin@iapedia.com / admin123');
-  console.log('   📧 User: user@test.com / user123');
-
-  // Seed Categories
-  const categories = await Promise.all([
-    prisma.category.create({
-      data: {
-        name: 'Writing & Content',
-        description: 'AI tools for writing and content creation',
-        fullDescription: 'Descubre herramientas de IA para redacción, copywriting, creación de contenido y asistencia editorial. Desde chatbots avanzados hasta asistentes de marketing, estas herramientas potencian tu creatividad y productividad en la escritura.',
-        iconUrl: 'https://api.iconify.design/mdi:pencil.svg',
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Image Generation',
-        description: 'Create stunning images with AI',
-        fullDescription: 'Explora las mejores herramientas de generación de imágenes con IA. Desde arte conceptual hasta fotografía realista, estas plataformas transforman tus ideas en visuales impresionantes con solo descripciones de texto.',
-        iconUrl: 'https://api.iconify.design/mdi:image.svg',
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Video & Animation',
-        description: 'AI-powered video editing and animation',
-        fullDescription: 'Herramientas de IA para edición de video, animación y creación de contenido audiovisual. Crea videos profesionales con avatares digitales, edita con asistencia inteligente y genera animaciones de forma automática.',
-        iconUrl: 'https://api.iconify.design/mdi:video.svg',
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Code & Development',
-        description: 'AI assistants for coding',
-        fullDescription: 'Asistentes de IA para programación y desarrollo de software. Estas herramientas te ayudan a escribir código más rápido, detectar bugs, generar documentación y aprender nuevas tecnologías con sugerencias inteligentes en tiempo real.',
-        iconUrl: 'https://api.iconify.design/mdi:code-tags.svg',
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Audio & Music',
-        description: 'Generate music and voices with AI',
-        fullDescription: 'Herramientas de IA para generación de música, síntesis de voz y edición de audio. Crea música original, clona voces, genera efectos de sonido y produce contenido de audio profesional sin experiencia musical previa.',
-        iconUrl: 'https://api.iconify.design/mdi:music.svg',
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Business & Productivity',
-        description: 'Boost your workflow with AI',
-        fullDescription: 'Optimiza tu flujo de trabajo con herramientas de IA para productividad empresarial. Automatiza tareas repetitivas, gestiona proyectos de manera inteligente, analiza datos y mejora la colaboración con tu equipo.',
-        iconUrl: 'https://api.iconify.design/mdi:briefcase.svg',
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Design & Art',
-        description: 'Tools for designers and artists',
-        fullDescription: 'Herramientas de diseño potenciadas por IA para creativos y artistas digitales. Crea diseños profesionales, genera paletas de colores, edita imágenes de forma inteligente y lleva tus proyectos visuales al siguiente nivel.',
-        iconUrl: 'https://api.iconify.design/mdi:palette.svg',
-      },
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Data & Analytics',
-        description: 'Analyze data with AI',
-        fullDescription: 'Plataformas de IA para análisis de datos y visualización. Transforma datos complejos en insights accionables, crea dashboards automáticos, predice tendencias y toma decisiones informadas con machine learning.',
-        iconUrl: 'https://api.iconify.design/mdi:chart-line.svg',
-      },
-    }),
-  ]);
-
-  console.log(`✅ Created ${categories.length} categories`);
-
-  // Seed Tools
-  const tools = [
-    // Writing & Content (15 tools)
-    {
+export const getToolsData = (categories: any[]) => [
+  // Writing & Content (15 tools)
+  {
+    tool: {
       name: 'ChatGPT',
       description: 'Advanced AI chatbot for conversations, writing, and problem-solving',
       url: 'https://chat.openai.com',
       imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'ai-assistant', 'popular', 'text-generation', 'gpt-powered'],
+  },
+  {
+    tool: {
       name: 'Claude',
       description: 'Anthropic\'s advanced AI assistant for thoughtful conversations and complex tasks',
       url: 'https://claude.ai',
       imageUrl: 'https://claude.ai/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'ai-assistant', 'trending', 'text-generation'],
+  },
+  {
+    tool: {
       name: 'Jasper AI',
       description: 'AI copywriting assistant for marketing content and blog posts',
       url: 'https://jasper.ai',
       imageUrl: 'https://www.jasper.ai/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'ai-assistant', 'text-generation', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Copy.ai',
       description: 'Generate marketing copy and content in seconds with AI',
       url: 'https://copy.ai',
       imageUrl: 'https://www.copy.ai/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'ai-assistant', 'text-generation'],
+  },
+  {
+    tool: {
       name: 'Writesonic',
       description: 'AI-powered content creation platform for articles, ads, and more',
       url: 'https://writesonic.com',
       imageUrl: 'https://writesonic.com/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'text-generation', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Grammarly',
       description: 'AI-powered writing assistant for grammar, clarity, and tone',
       url: 'https://grammarly.com',
       imageUrl: 'https://www.grammarly.com/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'ai-assistant', 'popular', 'productivity'],
+  },
+  {
+    tool: {
       name: 'QuillBot',
       description: 'AI paraphrasing and grammar checking tool for writers',
       url: 'https://quillbot.com',
       imageUrl: 'https://quillbot.com/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'text-generation', 'productivity'],
+  },
+  {
+    tool: {
       name: 'Rytr',
       description: 'AI writing assistant that helps create quality content fast',
       url: 'https://rytr.me',
       imageUrl: 'https://rytr.me/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'text-generation', 'ai-assistant'],
+  },
+  {
+    tool: {
       name: 'Sudowrite',
       description: 'AI-powered writing tool designed for creative fiction writers',
       url: 'https://sudowrite.com',
       imageUrl: 'https://sudowrite.com/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'text-generation', 'ai-assistant'],
+  },
+  {
+    tool: {
       name: 'Wordtune',
       description: 'AI writing companion that helps you say exactly what you mean',
       url: 'https://wordtune.com',
       imageUrl: 'https://www.wordtune.com/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'text-generation', 'productivity'],
+  },
+  {
+    tool: {
       name: 'Anyword',
       description: 'AI copywriting platform optimized for marketing performance',
       url: 'https://anyword.com',
       imageUrl: 'https://www.anyword.com/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'text-generation', 'automation'],
+  },
+  {
+    tool: {
       name: 'ContentBot',
       description: 'AI content creation tool for blog posts, marketing copy, and more',
       url: 'https://contentbot.ai',
       imageUrl: 'https://contentbot.ai/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'text-generation', 'automation'],
+  },
+  {
+    tool: {
       name: 'Copysmith',
       description: 'AI-powered content generation for ecommerce and enterprises',
       url: 'https://copysmith.ai',
       imageUrl: 'https://copysmith.ai/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'text-generation', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Simplified',
       description: 'All-in-one app for modern marketing teams with AI content creation',
       url: 'https://simplified.com',
       imageUrl: 'https://simplified.com/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'text-generation', 'design-tool', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Hypotenuse AI',
       description: 'AI content writer for ecommerce product descriptions and marketing',
       url: 'https://hypotenuse.ai',
       imageUrl: 'https://www.hypotenuse.ai/favicon.ico',
       categoryId: categories[0].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
+    labelSlugs: ['paid', 'text-generation', 'api-available'],
+  },
 
-    // Image Generation (15 tools)
-    {
+  // Image Generation (15 tools)
+  {
+    tool: {
       name: 'Midjourney',
       description: 'Create stunning AI-generated artwork and images from text prompts',
       url: 'https://midjourney.com',
       imageUrl: 'https://www.midjourney.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'image-generation', 'popular', 'community-favorite'],
+  },
+  {
+    tool: {
       name: 'DALL-E 3',
       description: 'OpenAI\'s powerful image generation model with improved accuracy',
       url: 'https://openai.com/dall-e-3',
       imageUrl: 'https://openai.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'image-generation', 'featured', 'gpt-powered'],
+  },
+  {
+    tool: {
       name: 'Stable Diffusion',
       description: 'Open-source AI image generation model for creative freedom',
       url: 'https://stability.ai',
       imageUrl: 'https://stability.ai/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'image-generation', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Leonardo.ai',
       description: 'AI-powered art generation platform for game assets and creative projects',
       url: 'https://leonardo.ai',
       imageUrl: 'https://leonardo.ai/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation', 'trending'],
+  },
+  {
+    tool: {
       name: 'Playground AI',
       description: 'Free-to-use AI image creator with advanced editing features',
       url: 'https://playgroundai.com',
       imageUrl: 'https://playgroundai.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Adobe Firefly',
       description: 'Adobe\'s generative AI for creative professionals',
       url: 'https://firefly.adobe.com',
       imageUrl: 'https://www.adobe.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation', 'popular', 'design-tool'],
+  },
+  {
+    tool: {
       name: 'Ideogram',
       description: 'AI image generation with superior text rendering capabilities',
       url: 'https://ideogram.ai',
       imageUrl: 'https://ideogram.ai/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: true,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation', 'trending'],
+  },
+  {
+    tool: {
       name: 'DreamStudio',
       description: 'Official Stable Diffusion interface by Stability AI',
       url: 'https://dreamstudio.ai',
       imageUrl: 'https://dreamstudio.ai/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Artbreeder',
       description: 'Collaborative AI art platform for creating and remixing images',
       url: 'https://artbreeder.com',
       imageUrl: 'https://www.artbreeder.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation', 'community-favorite'],
+  },
+  {
+    tool: {
       name: 'NightCafe',
       description: 'AI art generator with multiple algorithms and vibrant community',
       url: 'https://nightcafe.studio',
       imageUrl: 'https://creator.nightcafe.studio/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation'],
+  },
+  {
+    tool: {
       name: 'Craiyon',
       description: 'Free AI image generator, formerly known as DALL-E mini',
       url: 'https://craiyon.com',
       imageUrl: 'https://www.craiyon.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'image-generation', 'no-code'],
+  },
+  {
+    tool: {
       name: 'BlueWillow',
       description: 'AI image generation tool focused on ease of use',
       url: 'https://bluewillow.ai',
       imageUrl: 'https://www.bluewillow.ai/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'image-generation'],
+  },
+  {
+    tool: {
       name: 'Starryai',
       description: 'AI art generator app with NFT creation capabilities',
       url: 'https://starryai.com',
       imageUrl: 'https://starryai.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation'],
+  },
+  {
+    tool: {
       name: 'Photosonic',
       description: 'Writesonic\'s AI image generator for digital art creation',
       url: 'https://photosonic.writesonic.com',
       imageUrl: 'https://writesonic.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'image-generation'],
+  },
+  {
+    tool: {
       name: 'Bing Image Creator',
       description: 'Microsoft\'s free AI image generator powered by DALL-E',
       url: 'https://bing.com/create',
       imageUrl: 'https://www.bing.com/favicon.ico',
       categoryId: categories[1].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
+    labelSlugs: ['free', 'image-generation', 'no-code'],
+  },
 
-    // Video & Animation (12 tools)
-    {
+  // Video & Animation (12 tools)
+  {
+    tool: {
       name: 'Runway ML',
       description: 'AI-powered video editing and generation platform for creators',
       url: 'https://runwayml.com',
       imageUrl: 'https://runwayml.com/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing', 'trending', 'ai-assistant'],
+  },
+  {
+    tool: {
       name: 'Synthesia',
       description: 'Create professional AI videos with digital avatars in minutes',
       url: 'https://synthesia.io',
       imageUrl: 'https://www.synthesia.io/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'video-editing', 'no-code', 'popular'],
+  },
+  {
+    tool: {
       name: 'D-ID',
       description: 'AI video generation platform with talking avatars',
       url: 'https://d-id.com',
       imageUrl: 'https://www.d-id.com/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing', 'api-available'],
+  },
+  {
+    tool: {
       name: 'HeyGen',
       description: 'Create engaging videos with AI-generated avatars',
       url: 'https://heygen.com',
       imageUrl: 'https://www.heygen.com/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing', 'trending'],
+  },
+  {
+    tool: {
       name: 'Pictory',
       description: 'Turn text into professional videos using AI',
       url: 'https://pictory.ai',
       imageUrl: 'https://pictory.ai/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'video-editing', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Descript',
       description: 'All-in-one video editing with AI transcription and voice cloning',
       url: 'https://descript.com',
       imageUrl: 'https://www.descript.com/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing', 'audio-processing', 'popular'],
+  },
+  {
+    tool: {
       name: 'Fliki',
       description: 'Transform text into videos with AI voices and visuals',
       url: 'https://fliki.ai',
       imageUrl: 'https://fliki.ai/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing', 'no-code'],
+  },
+  {
+    tool: {
       name: 'InVideo AI',
       description: 'AI-powered video creation and editing platform',
       url: 'https://invideo.io',
       imageUrl: 'https://invideo.io/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Lumen5',
       description: 'Video creation platform that turns content into engaging videos',
       url: 'https://lumen5.com',
       imageUrl: 'https://lumen5.com/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing', 'automation'],
+  },
+  {
+    tool: {
       name: 'Steve.AI',
       description: 'AI video maker for creating animated and live videos',
       url: 'https://steve.ai',
       imageUrl: 'https://www.steve.ai/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'video-editing'],
+  },
+  {
+    tool: {
       name: 'Elai.io',
       description: 'AI video generation platform from text with avatars',
       url: 'https://elai.io',
       imageUrl: 'https://elai.io/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'video-editing', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Colossyan',
       description: 'AI video platform for workplace learning and training',
       url: 'https://colossyan.com',
       imageUrl: 'https://www.colossyan.com/favicon.ico',
       categoryId: categories[2].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
+    labelSlugs: ['paid', 'video-editing'],
+  },
 
-    // Code & Development (15 tools)
-    {
+  // Code & Development (15 tools)
+  {
+    tool: {
       name: 'GitHub Copilot',
       description: 'AI pair programmer that helps you write code faster',
       url: 'https://github.com/features/copilot',
       imageUrl: 'https://github.githubassets.com/favicons/favicon.svg',
       categoryId: categories[3].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'code-assistant', 'popular', 'ai-assistant', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Cursor',
       description: 'AI-first code editor built for maximum productivity',
       url: 'https://cursor.sh',
       imageUrl: 'https://cursor.sh/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant', 'trending', 'gpt-powered'],
+  },
+  {
+    tool: {
       name: 'Tabnine',
       description: 'AI code completion assistant for all major IDEs',
       url: 'https://tabnine.com',
       imageUrl: 'https://www.tabnine.com/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant', 'ai-assistant'],
+  },
+  {
+    tool: {
       name: 'Codeium',
       description: 'Free AI-powered code acceleration toolkit for developers',
       url: 'https://codeium.com',
       imageUrl: 'https://codeium.com/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'code-assistant', 'trending'],
+  },
+  {
+    tool: {
       name: 'Replit AI',
       description: 'Collaborative coding platform with integrated AI assistance',
       url: 'https://replit.com',
       imageUrl: 'https://replit.com/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Amazon CodeWhisperer',
       description: 'AWS AI coding companion for cloud development',
       url: 'https://aws.amazon.com/codewhisperer',
       imageUrl: 'https://aws.amazon.com/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'code-assistant', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Sourcegraph Cody',
       description: 'AI coding assistant that knows your entire codebase',
       url: 'https://sourcegraph.com/cody',
       imageUrl: 'https://sourcegraph.com/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant'],
+  },
+  {
+    tool: {
       name: 'AskCodi',
       description: 'AI development assistant for faster coding',
       url: 'https://askcodi.com',
       imageUrl: 'https://www.askcodi.com/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant'],
+  },
+  {
+    tool: {
       name: 'Mutable AI',
       description: 'AI-accelerated software development platform',
       url: 'https://mutable.ai',
       imageUrl: 'https://mutable.ai/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant', 'automation'],
+  },
+  {
+    tool: {
       name: 'CodeGPT',
       description: 'AI coding extension for VS Code and other editors',
       url: 'https://codegpt.co',
       imageUrl: 'https://codegpt.co/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant', 'gpt-powered'],
+  },
+  {
+    tool: {
       name: 'Pieces',
       description: 'AI-powered code snippets manager and workflow tool',
       url: 'https://pieces.app',
       imageUrl: 'https://pieces.app/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'code-assistant', 'productivity'],
+  },
+  {
+    tool: {
       name: 'Blackbox AI',
       description: 'AI code autocomplete and search for developers',
       url: 'https://blackbox.ai',
       imageUrl: 'https://www.blackbox.ai/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant'],
+  },
+  {
+    tool: {
       name: 'Bito AI',
       description: 'AI development assistant for code review and generation',
       url: 'https://bito.ai',
       imageUrl: 'https://bito.ai/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant'],
+  },
+  {
+    tool: {
       name: 'Mintlify',
       description: 'AI-powered documentation writer for code',
       url: 'https://mintlify.com',
       imageUrl: 'https://mintlify.com/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'code-assistant', 'automation'],
+  },
+  {
+    tool: {
       name: 'Stenography',
       description: 'Automatic code documentation using AI',
       url: 'https://stenography.dev',
       imageUrl: 'https://stenography.dev/favicon.ico',
       categoryId: categories[3].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
+    labelSlugs: ['freemium', 'code-assistant', 'automation'],
+  },
 
-    // Audio & Music (12 tools)
-    {
+  // Audio & Music (12 tools)
+  {
+    tool: {
       name: 'ElevenLabs',
       description: 'Advanced AI voice generation and text-to-speech platform',
       url: 'https://elevenlabs.io',
       imageUrl: 'https://elevenlabs.io/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing', 'popular', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Mubert',
       description: 'AI-generated royalty-free music for content creators',
       url: 'https://mubert.com',
       imageUrl: 'https://mubert.com/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing', 'automation'],
+  },
+  {
+    tool: {
       name: 'Soundraw',
       description: 'AI music generator for creating custom royalty-free tracks',
       url: 'https://soundraw.io',
       imageUrl: 'https://soundraw.io/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'audio-processing'],
+  },
+  {
+    tool: {
       name: 'AIVA',
       description: 'AI music composition for soundtracks and themes',
       url: 'https://aiva.ai',
       imageUrl: 'https://www.aiva.ai/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing'],
+  },
+  {
+    tool: {
       name: 'Boomy',
       description: 'Create original AI-generated music in seconds',
       url: 'https://boomy.com',
       imageUrl: 'https://boomy.com/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Lalal.ai',
       description: 'AI-powered vocal and instrumental audio separation',
       url: 'https://lalal.ai',
       imageUrl: 'https://www.lalal.ai/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing'],
+  },
+  {
+    tool: {
       name: 'Krisp',
       description: 'AI-powered noise cancellation for calls and recordings',
       url: 'https://krisp.ai',
       imageUrl: 'https://krisp.ai/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing', 'productivity'],
+  },
+  {
+    tool: {
       name: 'Descript Overdub',
       description: 'AI voice cloning for seamless audio editing',
       url: 'https://descript.com',
       imageUrl: 'https://www.descript.com/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'audio-processing'],
+  },
+  {
+    tool: {
       name: 'Resemble AI',
       description: 'AI voice generator for creating custom synthetic voices',
       url: 'https://resemble.ai',
       imageUrl: 'https://www.resemble.ai/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'audio-processing', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Play.ht',
       description: 'AI voice generator and text-to-speech platform',
       url: 'https://play.ht',
       imageUrl: 'https://play.ht/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Speechify',
       description: 'AI-powered text-to-speech app for reading on the go',
       url: 'https://speechify.com',
       imageUrl: 'https://speechify.com/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'audio-processing', 'productivity'],
+  },
+  {
+    tool: {
       name: 'Murf AI',
       description: 'AI voiceover studio with realistic text-to-speech voices',
       url: 'https://murf.ai',
       imageUrl: 'https://murf.ai/favicon.ico',
       categoryId: categories[4].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
+    labelSlugs: ['freemium', 'audio-processing'],
+  },
 
-    // Business & Productivity (15 tools)
-    {
+  // Business & Productivity (15 tools)
+  {
+    tool: {
       name: 'Notion AI',
       description: 'AI-powered writing assistant integrated with Notion workspace',
       url: 'https://notion.so/product/ai',
       imageUrl: 'https://www.notion.so/images/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'productivity', 'ai-assistant', 'popular'],
+  },
+  {
+    tool: {
       name: 'Zapier AI',
       description: 'Automate workflows with AI-powered integrations',
       url: 'https://zapier.com',
       imageUrl: 'https://zapier.com/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'automation', 'productivity', 'api-available', 'no-code'],
+  },
+  {
+    tool: {
       name: 'ClickUp AI',
       description: 'Project management with built-in AI assistance',
       url: 'https://clickup.com',
       imageUrl: 'https://clickup.com/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'automation'],
+  },
+  {
+    tool: {
       name: 'Todoist AI',
       description: 'Smart task management with AI-powered suggestions',
       url: 'https://todoist.com',
       imageUrl: 'https://todoist.com/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity'],
+  },
+  {
+    tool: {
       name: 'Reclaim AI',
       description: 'AI scheduling assistant that optimizes your calendar',
       url: 'https://reclaim.ai',
       imageUrl: 'https://reclaim.ai/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'automation', 'trending'],
+  },
+  {
+    tool: {
       name: 'Motion',
       description: 'AI calendar and project manager that plans your day',
       url: 'https://usemotion.com',
       imageUrl: 'https://www.usemotion.com/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'productivity', 'automation', 'trending'],
+  },
+  {
+    tool: {
       name: 'Otter.ai',
       description: 'AI meeting notes and transcription service',
       url: 'https://otter.ai',
       imageUrl: 'https://otter.ai/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'audio-processing', 'popular'],
+  },
+  {
+    tool: {
       name: 'Fireflies.ai',
       description: 'AI meeting recorder and transcription assistant',
       url: 'https://fireflies.ai',
       imageUrl: 'https://fireflies.ai/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'automation'],
+  },
+  {
+    tool: {
       name: 'Mem',
       description: 'AI-powered note-taking and knowledge management',
       url: 'https://mem.ai',
       imageUrl: 'https://mem.ai/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'ai-assistant'],
+  },
+  {
+    tool: {
       name: 'Sembly AI',
       description: 'AI meeting assistant for notes, insights, and actions',
       url: 'https://sembly.ai',
       imageUrl: 'https://www.sembly.ai/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'automation'],
+  },
+  {
+    tool: {
       name: 'Beautiful.ai',
       description: 'AI-powered presentation maker with smart templates',
       url: 'https://beautiful.ai',
       imageUrl: 'https://www.beautiful.ai/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'productivity', 'design-tool'],
+  },
+  {
+    tool: {
       name: 'Tome',
       description: 'AI-powered storytelling and presentation tool',
       url: 'https://tome.app',
       imageUrl: 'https://tome.app/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Gamma',
       description: 'AI-powered presentations, docs, and webpages',
       url: 'https://gamma.app',
       imageUrl: 'https://gamma.app/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'no-code', 'trending'],
+  },
+  {
+    tool: {
       name: 'Taskade',
       description: 'AI-powered productivity workspace for teams',
       url: 'https://taskade.com',
       imageUrl: 'https://www.taskade.com/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'productivity', 'automation'],
+  },
+  {
+    tool: {
       name: 'Magical',
       description: 'AI productivity assistant for automating repetitive tasks',
       url: 'https://magical.so',
       imageUrl: 'https://www.getmagical.com/favicon.ico',
       categoryId: categories[5].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
+    labelSlugs: ['free', 'productivity', 'automation'],
+  },
 
-    // Design & Art (12 tools)
-    {
+  // Design & Art (12 tools)
+  {
+    tool: {
       name: 'Canva AI',
       description: 'Design tools powered by AI for everyone',
       url: 'https://canva.com',
       imageUrl: 'https://www.canva.com/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'design-tool', 'no-code', 'community-favorite'],
+  },
+  {
+    tool: {
       name: 'Figma AI',
       description: 'Collaborative design tool with AI-powered features',
       url: 'https://figma.com',
       imageUrl: 'https://www.figma.com/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'design-tool', 'featured'],
+  },
+  {
+    tool: {
       name: 'Uizard',
       description: 'AI-powered UI design tool for rapid prototyping',
       url: 'https://uizard.io',
       imageUrl: 'https://uizard.io/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'design-tool', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Khroma',
       description: 'AI color tool that learns your preferences',
       url: 'https://khroma.co',
       imageUrl: 'https://www.khroma.co/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'design-tool'],
+  },
+  {
+    tool: {
       name: 'Looka',
       description: 'AI-powered logo maker and brand identity platform',
       url: 'https://looka.com',
       imageUrl: 'https://looka.com/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'design-tool', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Designs.ai',
       description: 'Integrated AI design suite for logos, videos, and more',
       url: 'https://designs.ai',
       imageUrl: 'https://designs.ai/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'design-tool', 'automation'],
+  },
+  {
+    tool: {
       name: 'Autodraw',
       description: 'Google\'s AI drawing assistant that suggests sketches',
       url: 'https://autodraw.com',
       imageUrl: 'https://www.autodraw.com/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'design-tool', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Remove.bg',
       description: 'AI-powered automatic background removal tool',
       url: 'https://remove.bg',
       imageUrl: 'https://www.remove.bg/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'design-tool', 'image-generation', 'popular'],
+  },
+  {
+    tool: {
       name: 'Cleanup.pictures',
       description: 'AI image cleanup tool to remove unwanted objects',
       url: 'https://cleanup.pictures',
       imageUrl: 'https://cleanup.pictures/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'design-tool', 'image-generation'],
+  },
+  {
+    tool: {
       name: 'Palette.fm',
       description: 'AI-powered photo colorization for black and white images',
       url: 'https://palette.fm',
       imageUrl: 'https://palette.fm/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREE,
+      planType: 'FREE',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['free', 'design-tool', 'image-generation'],
+  },
+  {
+    tool: {
       name: 'Let\'s Enhance',
       description: 'AI image upscaler and enhancer for better quality',
       url: 'https://letsenhance.io',
       imageUrl: 'https://letsenhance.io/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'design-tool', 'image-generation'],
+  },
+  {
+    tool: {
       name: 'Topaz Labs',
       description: 'Professional AI photo and video enhancement software',
       url: 'https://topazlabs.com',
       imageUrl: 'https://www.topazlabs.com/favicon.ico',
       categoryId: categories[6].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
+    labelSlugs: ['paid', 'design-tool', 'image-generation'],
+  },
 
-    // Data & Analytics (11 tools)
-    {
+  // Data & Analytics (11 tools)
+  {
+    tool: {
       name: 'Julius AI',
       description: 'AI data analyst for analyzing and visualizing data',
       url: 'https://julius.ai',
       imageUrl: 'https://julius.ai/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'data-analysis', 'trending', 'ai-assistant'],
+  },
+  {
+    tool: {
       name: 'DataRobot',
       description: 'Enterprise AI platform for automated machine learning',
       url: 'https://datarobot.com',
       imageUrl: 'https://www.datarobot.com/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'data-analysis', 'automation', 'api-available'],
+  },
+  {
+    tool: {
       name: 'MonkeyLearn',
       description: 'AI-powered text analysis and data extraction',
       url: 'https://monkeylearn.com',
       imageUrl: 'https://monkeylearn.com/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'data-analysis', 'api-available'],
+  },
+  {
+    tool: {
       name: 'Tableau AI',
       description: 'Business intelligence platform with AI analytics',
       url: 'https://tableau.com',
       imageUrl: 'https://www.tableau.com/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'data-analysis', 'popular'],
+  },
+  {
+    tool: {
       name: 'Power BI AI',
       description: 'Microsoft\'s business analytics with AI capabilities',
       url: 'https://powerbi.microsoft.com',
       imageUrl: 'https://powerbi.microsoft.com/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: true,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'data-analysis', 'popular'],
+  },
+  {
+    tool: {
       name: 'Hex',
       description: 'Modern AI-powered data workspace for analytics',
       url: 'https://hex.tech',
       imageUrl: 'https://hex.tech/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'data-analysis', 'code-assistant'],
+  },
+  {
+    tool: {
       name: 'Akkio',
       description: 'No-code AI platform for business predictions',
       url: 'https://akkio.com',
       imageUrl: 'https://www.akkio.com/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'data-analysis', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Obviously AI',
       description: 'No-code AI tool for building predictive models',
       url: 'https://obviously.ai',
       imageUrl: 'https://obviously.ai/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'data-analysis', 'no-code'],
+  },
+  {
+    tool: {
       name: 'DataChat',
       description: 'Conversational AI for data analytics and insights',
       url: 'https://datachat.ai',
       imageUrl: 'https://datachat.ai/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['paid', 'data-analysis', 'ai-assistant'],
+  },
+  {
+    tool: {
       name: 'Polymer',
       description: 'AI-powered data analysis and visualization platform',
       url: 'https://polymersearch.com',
       imageUrl: 'https://www.polymersearch.com/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.FREEMIUM,
+      planType: 'FREEMIUM',
       isTrending: false,
       isNew: false,
     },
-    {
+    labelSlugs: ['freemium', 'data-analysis', 'no-code'],
+  },
+  {
+    tool: {
       name: 'Tellius',
       description: 'AI-powered analytics platform for business intelligence',
       url: 'https://tellius.com',
       imageUrl: 'https://www.tellius.com/favicon.ico',
       categoryId: categories[7].id,
-      planType: PlanType.PAID,
+      planType: 'PAID',
       isTrending: false,
       isNew: false,
     },
-  ];
-
-  for (const tool of tools) {
-    await prisma.tool.create({ data: tool });
-  }
-
-  console.log(`✅ Created ${tools.length} tools`);
-  console.log('🎉 Seed completed successfully!');
-}
-
-main()
-  .catch((e) => {
-    console.error('❌ Seed failed:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+    labelSlugs: ['paid', 'data-analysis', 'automation'],
+  },
+];
